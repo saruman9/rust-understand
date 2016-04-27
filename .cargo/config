@@ -1,0 +1,3 @@
+[target.x86_64-unknown-linux-gnu.udb_api]
+rustc-link-search = ["/opt/scitools/bin/linux64"]
+rustc-link-lib = ["udb_api"]

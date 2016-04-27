@@ -1,0 +1,6 @@
+[package]
+name = "export_info"
+version = "0.1.0"
+authors = ["saruman9 <rum.274.4@gmail.com>"]
+links = "udb_api"
+build = "build.rs"
