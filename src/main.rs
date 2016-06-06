@@ -1,36 +1,30 @@
-use std::os::raw::{c_char, c_int, c_void};
+use std::os::raw::{c_char, c_int};
 use std::ffi::{CStr, CString};
 use std::mem;
 
+// Opaque structs transform to enum
+enum UdbEntity_ {}
 #[allow(dead_code)]
-#[repr(C)]
-struct UdbEntity_;
+enum UdbKindList_ {}
 #[allow(dead_code)]
-#[repr(C)]
-struct UdbKindList_;
+enum UdbLexeme_ {}
 #[allow(dead_code)]
-#[repr(C)]
-struct UdbLexeme_;
+enum UdbLexer_ {}
 #[allow(dead_code)]
-#[repr(C)]
-struct UdbLexer_;
+enum UdbLibrary_ {}
 #[allow(dead_code)]
-#[repr(C)]
-struct UdbLibrary_;
+enum UdbMetric_ {}
 #[allow(dead_code)]
-#[repr(C)]
-struct UdbMetric_;
-#[allow(dead_code)]
-#[repr(C)]
-struct UdbReference_;
+enum UdbReference_ {}
 
-type UdbEntity    = *mut c_void;
-type UdbKindList  = *mut UdbKindList_;
-type UdbLexeme    = *mut UdbLexeme_;
-type UdbLexer     = *mut UdbLexer_;
-type UdbLibrary   = *mut UdbLibrary_;
-type UdbMetric    = *mut UdbMetric_;
-type UdbReference = *mut UdbReference_;
+type UdbKind      = c_int;
+type UdbEntity    = *mut UdbEntity_;
+type UdbKindList  = *const UdbKindList_;
+type UdbLexeme    = *const UdbLexeme_;
+type UdbLexer     = *const UdbLexer_;
+type UdbLibrary   = *const UdbLibrary_;
+type UdbMetric    = *const UdbMetric_;
+type UdbReference = *const UdbReference_;
 
 #[allow(non_camel_case_types)]
 #[allow(dead_code)]
@@ -76,7 +70,7 @@ type UdbLanguage = UdbLanguage_;
 
 #[allow(non_camel_case_types)]
 #[allow(dead_code)]
-#[repr(i64)]
+#[repr(C)]
 enum UdbMetricKind_ {
     Udb_mkind_NONE=0,
     Udb_mkind_Integer,
