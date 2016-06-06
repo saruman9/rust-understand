@@ -152,8 +152,10 @@ enum UdbToken_ {
 type UdbToken = UdbToken_;
 
 extern {
+    // Return the current build.
     fn udbInfoBuild() -> *const c_char;
 
+    // Close a database.
     fn udbDbClose();
 
     // Open a database. Filename is in UTF-8.
@@ -161,16 +163,46 @@ extern {
 
     // Return the entity long name as a temporary string. If there is no long name
     // the short name is returned.
-    fn udbEntityNameLong(udb_entity: UdbEntity) -> *mut c_char;
+    fn udbEntityNameLong(udb_entity: UdbEntity) -> *const c_char;
+
+    // Return allocated list of all entity kinds. Call udbListKindFree() to free
+    // list.
+    fn udbListKindEntity(udb_kind_list: *const *const UdbKind,
+                         kinds_size: *const c_int);
+
+    // Parse the kind text and return an allocated kindlist that must be freed
+    // with udbkindlistfree().
+    fn udbKindParse(kind_text: *const c_char) -> UdbKindList;
+
+    // Return the entity kind.
+    fn udbEntityKind(udb_entity: UdbEntity) -> UdbKind;
+
+    // Free an allocated kindlist.
+    fn udbKindListFree(udb_kind_list: UdbKindList);
+
+    // Return the short name of kind as a temporary string.
+    fn udbKindShortname(udb_kind: UdbKind) -> *mut c_char;
+
+    // Return the long name of kind as a temporary string.
+    fn udbKindLongname(udb_kind: UdbKind) -> *mut c_char;
 
     // Return a non-allocated, permanent list of all entities. After a database
     // update, the list is invalid and must be retrieved again. Ths list may be
     // used in places where an allocated entity list is required and may be
     // safely passed to udbListEntityFree().
-    fn udbListEntity(udb_list_entity: *mut UdbEntity, ents_size: *mut c_int);
+    fn udbListEntity(udb_entity_list: *mut *mut UdbEntity, ents_size: *mut c_int);
+
+    // Filter the specified list of entities, using the kinds specified, and return
+    // a new allocated array. Use udbListEntityFree() to free this list. The
+    // original list of entities and the kindlist must both be allocated and will
+    // be freed by this call.
+    fn udbListEntityFilter(udb_entity      : *mut UdbEntity,
+                           udb_list_kind   : UdbKindList,
+                           udb_entity_list : *mut *mut UdbEntity,
+                           ents_size       : *mut c_int);
 
     // Free an allocated list of entities.
-    fn udbListEntityFree(udb_entity: UdbEntity);
+    fn udbListEntityFree(udb_entity: *const UdbEntity);
 }
 
 fn main() {
