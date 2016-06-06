@@ -206,25 +206,34 @@ extern {
 }
 
 fn main() {
-    let x = unsafe { CStr::from_ptr(udbInfoBuild()).to_string_lossy() };
-    println!("Build: {}", x);
+    let db_filename = CString::new("./test.udb").unwrap();
+    // let kind_text = CString::new("python file").unwrap();
 
-    let db_filename = CString::new("./test.udb").unwrap().as_ptr();
-    let status: UdbStatus = unsafe { udbDbOpen(db_filename) };
-    let mut ents: UdbEntity = unsafe { mem::uninitialized() };
+    let build_num = unsafe { CStr::from_ptr(udbInfoBuild()).to_string_lossy() };
+    println!("Build: {}", build_num);
+
+    let status: UdbStatus = unsafe { udbDbOpen(db_filename.as_ptr()) };
+    println!("status: {:?}", status);
+
+    let mut all_ents: *mut UdbEntity = unsafe { mem::uninitialized() };
+    let mut ents_filter: *mut UdbEntity = unsafe { mem::uninitialized() };
     let mut ents_size: c_int = 0;
-    let i: i32 = 0;
-    unsafe { udbListEntity(&mut ents, &mut ents_size) };
-    println!("{:?}", status);
-    println!("{}", ents_size);
 
-    /*
-    for x in 0..ents_size {
-        println!("{:?}", udbEntityNameLong(ents[x]));
+    unsafe {
+        udbListEntity(&mut all_ents, &mut ents_size);
+        // udbListEntityFilter(ents, udbKindParse(kind_text.as_ptr()), &mut ents_filter, &mut ents_size);
+    };
+    println!("size of ents: {}", ents_size);
+
+    for i in 0..ents_size as isize {
+        unsafe {
+            println!("{} --- {}", CStr::from_ptr(udbEntityNameLong(*all_ents.offset(i))).to_string_lossy(),
+            CStr::from_ptr(udbKindLongname(udbEntityKind(*all_ents.offset(i)))).to_string_lossy());
+        }
     }
-     */
 
-
-    unsafe { udbListEntityFree(ents) };
-    unsafe { udbDbClose() };
+    unsafe {
+        udbListEntityFree(all_ents);
+        udbDbClose()
+    };
 }
