@@ -19,12 +19,12 @@ enum UdbReference_ {}
 
 type UdbKind      = c_int;
 type UdbEntity    = *mut UdbEntity_;
-type UdbKindList  = *const UdbKindList_;
-type UdbLexeme    = *const UdbLexeme_;
-type UdbLexer     = *const UdbLexer_;
-type UdbLibrary   = *const UdbLibrary_;
-type UdbMetric    = *const UdbMetric_;
-type UdbReference = *const UdbReference_;
+type UdbKindList  = *mut UdbKindList_;
+type UdbLexeme    = *mut UdbLexeme_;
+type UdbLexer     = *mut UdbLexer_;
+type UdbLibrary   = *mut UdbLibrary_;
+type UdbMetric    = *mut UdbMetric_;
+type UdbReference = *mut UdbReference_;
 
 #[allow(non_camel_case_types)]
 #[allow(dead_code)]
@@ -72,7 +72,7 @@ type UdbLanguage = UdbLanguage_;
 #[allow(dead_code)]
 #[repr(C)]
 enum UdbMetricKind_ {
-    Udb_mkind_NONE=0,
+    Udb_mkind_NONE = 0,
     Udb_mkind_Integer,
     Udb_mkind_Real
 }
