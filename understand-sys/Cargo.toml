@@ -12,6 +12,3 @@ build = "build.rs"
 
 [lib]
 name = "understand_sys"
-
-[build-depedencies]
-pkg-config = "0.3"
