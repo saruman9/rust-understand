@@ -1,6 +1,18 @@
 [package]
-name = "export_info"
+name = "understand"
 version = "0.1.0"
 authors = ["saruman9 <rum.274.4@gmail.com>"]
-links = "udb_api"
-build = "build.rs"
+
+description = "SciTools Understand API bindings for Rust"
+repository = "https://gitlab.com/saruman9/understand-rust"
+readme = "README.md"
+keywords = ["understand", "scitools", "analyzer"]
+license = "MIT"
+
+[depedencies.understand-sys]
+path = "understand-sys"
+version = "0.1.0"
+
+[lib]
+name = "understand"
+path = "lib.rs"

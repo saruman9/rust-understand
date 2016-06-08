@@ -1,0 +1,18 @@
+[package]
+name = "understand-sys"
+version = "0.1.0"
+authors = ["saruman9 <rum.274.4@gmail.com>"]
+
+description = "Native bindings to SciTools Understand API library udb_api"
+repository = "https://gitlab.com/saruman9/understand-rust"
+license = "MIT"
+
+links = "udb_api"
+build = "build.rs"
+
+[lib]
+name = "understand_sys"
+path = "src/lib.rs"
+
+[build-depedencies]
+pkg-config = "0.3"
