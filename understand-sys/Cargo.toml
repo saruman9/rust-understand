@@ -12,7 +12,6 @@ build = "build.rs"
 
 [lib]
 name = "understand_sys"
-path = "src/lib.rs"
 
 [build-depedencies]
 pkg-config = "0.3"
