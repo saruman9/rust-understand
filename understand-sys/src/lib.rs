@@ -1,6 +1,4 @@
 use std::os::raw::{c_char, c_int};
-use std::ffi::{CStr, CString};
-use std::mem;
 
 // Opaque structs transform to enum
 pub enum UdbEntity_ {}
@@ -205,35 +203,25 @@ extern {
     pub fn udbListEntityFree(udb_entity: *const UdbEntity);
 }
 
-fn main() {
-    let db_filename = CString::new("./test.udb").unwrap();
-    // let kind_text = CString::new("python file").unwrap();
+// TODO delete tests, because unsafe
+#[cfg(test)]
+mod tests {
+    use std::ffi::{CStr, CString};
 
-    let build_num = unsafe { CStr::from_ptr(udbInfoBuild()).to_string_lossy() };
-    println!("Build: {}", build_num);
+    use super::{UdbStatus_, udbInfoBuild, udbDbOpen};
 
-    let status: UdbStatus = unsafe { udbDbOpen(db_filename.as_ptr()) };
-    println!("status: {:?}", status);
-
-    let mut all_ents: *mut UdbEntity = unsafe { mem::uninitialized() };
-    let mut ents_filter: *mut UdbEntity = unsafe { mem::uninitialized() };
-    let mut ents_size: c_int = 0;
-
-    unsafe {
-        udbListEntity(&mut all_ents, &mut ents_size);
-        // udbListEntityFilter(ents, udbKindParse(kind_text.as_ptr()), &mut ents_filter, &mut ents_size);
-    };
-    println!("size of ents: {}", ents_size);
-
-    for i in 0..ents_size as isize {
-        unsafe {
-            println!("{} --- {}", CStr::from_ptr(udbEntityNameLong(*all_ents.offset(i))).to_string_lossy(),
-            CStr::from_ptr(udbKindLongname(udbEntityKind(*all_ents.offset(i)))).to_string_lossy());
-        }
+    #[test]
+    fn get_info_build() {
+        assert_eq!("833", unsafe { CStr::from_ptr(udbInfoBuild()).to_string_lossy() });
     }
 
-    unsafe {
-        udbListEntityFree(all_ents);
-        udbDbClose()
-    };
+    #[test]
+    fn get_status_open() {
+        let udb_db_path: CString = CString::new("test.udb").unwrap();
+
+        match unsafe { udbDbOpen(udb_db_path.as_ptr()) } {
+            UdbStatus_::Udb_statusOkay => return,
+            _ => panic!("Unexpected status of udb DB")
+        }
+    }
 }
