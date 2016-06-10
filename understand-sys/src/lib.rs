@@ -3,51 +3,51 @@ use std::ffi::{CStr, CString};
 use std::mem;
 
 // Opaque structs transform to enum
-enum UdbEntity_ {}
+pub enum UdbEntity_ {}
 #[allow(dead_code)]
-enum UdbKindList_ {}
+pub enum UdbKindList_ {}
 #[allow(dead_code)]
-enum UdbLexeme_ {}
+pub enum UdbLexeme_ {}
 #[allow(dead_code)]
-enum UdbLexer_ {}
+pub enum UdbLexer_ {}
 #[allow(dead_code)]
-enum UdbLibrary_ {}
+pub enum UdbLibrary_ {}
 #[allow(dead_code)]
-enum UdbMetric_ {}
+pub enum UdbMetric_ {}
 #[allow(dead_code)]
-enum UdbReference_ {}
+pub enum UdbReference_ {}
 
-type UdbKind      = c_int;
-type UdbEntity    = *mut UdbEntity_;
-type UdbKindList  = *mut UdbKindList_;
-type UdbLexeme    = *mut UdbLexeme_;
-type UdbLexer     = *mut UdbLexer_;
-type UdbLibrary   = *mut UdbLibrary_;
-type UdbMetric    = *mut UdbMetric_;
-type UdbReference = *mut UdbReference_;
+pub type UdbKind      = c_int;
+pub type UdbEntity    = *mut UdbEntity_;
+pub type UdbKindList  = *mut UdbKindList_;
+pub type UdbLexeme    = *mut UdbLexeme_;
+pub type UdbLexer     = *mut UdbLexer_;
+pub type UdbLibrary   = *mut UdbLibrary_;
+pub type UdbMetric    = *mut UdbMetric_;
+pub type UdbReference = *mut UdbReference_;
 
 #[allow(non_camel_case_types)]
 #[allow(dead_code)]
 #[repr(u8)]
-enum UdbCommentStyle_ {
+pub enum UdbCommentStyle_ {
     Udb_commentStyleDefault = 0,
     Udb_commentStyleAfter   = 1,
     Udb_commentStyleBefore  = 2
 }
-type UdbCommentStyle = UdbCommentStyle_;
+pub type UdbCommentStyle = UdbCommentStyle_;
 
 #[allow(non_camel_case_types)]
 #[allow(dead_code)]
 #[repr(u8)]
-enum UdbCommentFormat_ {
+pub enum UdbCommentFormat_ {
     Udb_commentFormatDefault = 0
 }
-type UdbCommentFormat = UdbCommentStyle_;
+pub type UdbCommentFormat = UdbCommentFormat_;
 
 #[allow(non_camel_case_types)]
 #[allow(dead_code)]
 #[repr(u16)]
-enum UdbLanguage_ {
+pub enum UdbLanguage_ {
     Udb_language_NONE    = 0x0000,
     Udb_language_ALL     = 0x7FFF,
     Udb_language_Ada     = 0x0001,
@@ -66,23 +66,23 @@ enum UdbLanguage_ {
     Udb_language_Vhdl    = 0x2000,
     Udb_language_Web     = 0x4000,
 }
-type UdbLanguage = UdbLanguage_;
+pub type UdbLanguage = UdbLanguage_;
 
 #[allow(non_camel_case_types)]
 #[allow(dead_code)]
 #[repr(C)]
-enum UdbMetricKind_ {
+pub enum UdbMetricKind_ {
     Udb_mkind_NONE = 0,
     Udb_mkind_Integer,
     Udb_mkind_Real
 }
-type UdbMetricKind = UdbMetricKind_;
+pub type UdbMetricKind = UdbMetricKind_;
 
 #[allow(non_camel_case_types)]
 #[allow(dead_code)]
 #[repr(u8)]
 #[derive(Debug)]
-enum UdbStatus_ {
+pub enum UdbStatus_ {
     Udb_statusOkay                     = 0,
     Udb_statusDBAlreadyOpen            = 1,
     Udb_statusDBBusy                   = 2, /* not used */
@@ -125,12 +125,12 @@ enum UdbStatus_ {
     Udb_statusWrongProduct             = 39,
     Udb_status_LAST
 }
-type UdbStatus = UdbStatus_;
+pub type UdbStatus = UdbStatus_;
 
 #[allow(non_camel_case_types)]
 #[allow(dead_code)]
 #[repr(u8)]
-enum UdbToken_ {
+pub enum UdbToken_ {
     Udb_tokenEOF            = 0,
     Udb_tokenComment        = 1,
     Udb_tokenContinuation   = 2,
@@ -149,60 +149,60 @@ enum UdbToken_ {
     Udb_tokenWhitespace     = 15,
     Udb_token_LAST
 }
-type UdbToken = UdbToken_;
+pub type UdbToken = UdbToken_;
 
 extern {
     // Return the current build.
-    fn udbInfoBuild() -> *const c_char;
+    pub fn udbInfoBuild() -> *const c_char;
 
     // Close a database.
-    fn udbDbClose();
+    pub fn udbDbClose();
 
     // Open a database. Filename is in UTF-8.
-    fn udbDbOpen(filename: *const c_char) -> UdbStatus;
+    pub fn udbDbOpen(filename: *const c_char) -> UdbStatus;
 
     // Return the entity long name as a temporary string. If there is no long name
     // the short name is returned.
-    fn udbEntityNameLong(udb_entity: UdbEntity) -> *const c_char;
+    pub fn udbEntityNameLong(udb_entity: UdbEntity) -> *const c_char;
 
     // Return allocated list of all entity kinds. Call udbListKindFree() to free
     // list.
-    fn udbListKindEntity(udb_kind_list: *const *const UdbKind,
+    pub fn udbListKindEntity(udb_kind_list: *const *const UdbKind,
                          kinds_size: *const c_int);
 
     // Parse the kind text and return an allocated kindlist that must be freed
     // with udbkindlistfree().
-    fn udbKindParse(kind_text: *const c_char) -> UdbKindList;
+    pub fn udbKindParse(kind_text: *const c_char) -> UdbKindList;
 
     // Return the entity kind.
-    fn udbEntityKind(udb_entity: UdbEntity) -> UdbKind;
+    pub fn udbEntityKind(udb_entity: UdbEntity) -> UdbKind;
 
     // Free an allocated kindlist.
-    fn udbKindListFree(udb_kind_list: UdbKindList);
+    pub fn udbKindListFree(udb_kind_list: UdbKindList);
 
     // Return the short name of kind as a temporary string.
-    fn udbKindShortname(udb_kind: UdbKind) -> *mut c_char;
+    pub fn udbKindShortname(udb_kind: UdbKind) -> *mut c_char;
 
     // Return the long name of kind as a temporary string.
-    fn udbKindLongname(udb_kind: UdbKind) -> *mut c_char;
+    pub fn udbKindLongname(udb_kind: UdbKind) -> *mut c_char;
 
     // Return a non-allocated, permanent list of all entities. After a database
     // update, the list is invalid and must be retrieved again. Ths list may be
     // used in places where an allocated entity list is required and may be
     // safely passed to udbListEntityFree().
-    fn udbListEntity(udb_entity_list: *mut *mut UdbEntity, ents_size: *mut c_int);
+    pub fn udbListEntity(udb_entity_list: *mut *mut UdbEntity, ents_size: *mut c_int);
 
     // Filter the specified list of entities, using the kinds specified, and return
     // a new allocated array. Use udbListEntityFree() to free this list. The
     // original list of entities and the kindlist must both be allocated and will
     // be freed by this call.
-    fn udbListEntityFilter(udb_entity      : *mut UdbEntity,
-                           udb_list_kind   : UdbKindList,
-                           udb_entity_list : *mut *mut UdbEntity,
-                           ents_size       : *mut c_int);
+    pub fn udbListEntityFilter(udb_entity      : *mut UdbEntity,
+                               udb_list_kind   : UdbKindList,
+                               udb_entity_list : *mut *mut UdbEntity,
+                               ents_size       : *mut c_int);
 
     // Free an allocated list of entities.
-    fn udbListEntityFree(udb_entity: *const UdbEntity);
+    pub fn udbListEntityFree(udb_entity: *const UdbEntity);
 }
 
 fn main() {
