@@ -7,7 +7,7 @@ struct UnderstandVersion {
     major: i32,
     minor: i32,
     build: i32,
-    os: OS,
+    os: Os,
     arch: Arch,
 }
 
@@ -31,7 +31,7 @@ impl fmt::Display for Arch {
 }
 
 #[allow(dead_code)]
-enum OS {
+enum Os {
     MacOSX,
     Linux,
     LinuxLegacy,
@@ -39,14 +39,14 @@ enum OS {
     Windows,
 }
 
-impl fmt::Display for OS {
+impl fmt::Display for Os {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            OS::MacOSX => write!(f, "MacOSX"),
-            OS::Linux => write!(f, "Linux"),
-            OS::LinuxLegacy => write!(f, "LinuxLegacy"),
-            OS::Solaris => write!(f, "Solaris"),
-            OS::Windows => write!(f, "Windows")
+            Os::MacOSX => write!(f, "MacOSX"),
+            Os::Linux => write!(f, "Linux"),
+            Os::LinuxLegacy => write!(f, "LinuxLegacy"),
+            Os::Solaris => write!(f, "Solaris"),
+            Os::Windows => write!(f, "Windows")
         }
     }
 }
@@ -55,53 +55,94 @@ const UNDERSTAND_RELEASE: UnderstandVersion = UnderstandVersion {
     major: 4,
     minor: 0,
     build: 833,
-    os: OS::Linux,
+    os: Os::Linux,
     arch: Arch::Bit64
 };
 
 fn main() {
-    let out_dir = env::var("OUT_DIR").unwrap();
     let cargo_manifest_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
 
-    let ext_pathbuf: PathBuf = PathBuf::from(cargo_manifest_dir.to_owned()).join("ext");
+    let ext_pathbuf: PathBuf = PathBuf::from(&cargo_manifest_dir).join("ext");
 
     let ext_type = match UNDERSTAND_RELEASE.os {
-        OS::Linux | OS::LinuxLegacy | OS::Solaris => "tgz",
-        OS::MacOSX => "dmg",
-        OS::Windows => "zip"
+        Os::Linux | Os::LinuxLegacy | Os::Solaris => "tgz",
+        Os::MacOSX => "dmg",
+        Os::Windows => "zip"
     };
-    let understand_tarball: String = format!("Understand-{major}.{minor}.{build}-{os}-{arch}.{ext}",
-                                            major = UNDERSTAND_RELEASE.major,
-                                            minor = UNDERSTAND_RELEASE.minor,
-                                            build = UNDERSTAND_RELEASE.build,
-                                            os = UNDERSTAND_RELEASE.os,
-                                            arch = UNDERSTAND_RELEASE.arch,
-                                            ext = ext_type);
+    let understand_tarball = format!("Understand-{major}.{minor}.{build}-{os}-{arch}.{ext}",
+                                    major = UNDERSTAND_RELEASE.major,
+                                    minor = UNDERSTAND_RELEASE.minor,
+                                    build = UNDERSTAND_RELEASE.build,
+                                    os = UNDERSTAND_RELEASE.os,
+                                    arch = UNDERSTAND_RELEASE.arch,
+                                    ext = ext_type);
 
-    let understand_pathbuf: PathBuf = PathBuf::from(ext_pathbuf.to_path_buf()).join(understand_tarball.to_owned());
+    let understand_pathbuf: PathBuf = PathBuf::from(ext_pathbuf.to_path_buf()).join(&understand_tarball);
+    let udb_api_pathbuf: PathBuf = PathBuf::from(ext_pathbuf.to_path_buf()).join("libudb_api.so");
 
-    let und_build_base_url = "http://builds.scitools.com/all_builds";
-    let url_download = format!("{base}/b{build}/Understand/{tarball}",
-                               base = und_build_base_url,
-                               build = UNDERSTAND_RELEASE.build,
-                               tarball = understand_tarball);
+    // TODO Replace pure Rust code
+    if !udb_api_pathbuf.exists() {
+        if !understand_pathbuf.exists() {
+            let und_build_base_url = "http://builds.scitools.com/all_builds";
+            let url_download = format!("{base}/b{build}/Understand/{tarball}",
+                                    base = und_build_base_url,
+                                    build = UNDERSTAND_RELEASE.build,
+                                    tarball = understand_tarball);
 
-    if !understand_pathbuf.exists() {
-        let status = Command::new("curl")
-            .arg("-OL")
-            .arg("-C")
-            .arg("-")
-            .arg(url_download)
-            .current_dir(ext_pathbuf.as_path())
-            .status().unwrap_or_else(|e| { panic!("failed to execute curl: {}", e) });
-        if !status.success() {
-            panic!("curl executed with error: {}", status);
+            let output = Command::new("curl")
+                .arg("-OL")
+                .arg("-C")
+                .arg("-")
+                .arg(url_download)
+                .current_dir(ext_pathbuf.as_path())
+                .output()
+                .unwrap_or_else(|e| {
+                    panic!("failed to execute curl: {}", e)
+                });
+            if !output.status.success() {
+                panic!("curl executed with error:\n{}",
+                    String::from_utf8_lossy(&output.stderr))
+            }
+        } else {
+            let os: &'static str = match UNDERSTAND_RELEASE.os {
+                Os::Linux | Os::LinuxLegacy => "linux",
+                Os::Windows => "windows",
+                // TODO Solaris, MacOS, etc
+                _ => "???"
+            };
+            let arch: &'static str = match UNDERSTAND_RELEASE.arch {
+                Arch::Bit32 => "32",
+                Arch::Bit64 => "64",
+                // TODO Sparc, x86
+                _ => "???"
+            };
+            let ext: &'static str = match UNDERSTAND_RELEASE.os {
+                Os::Linux | Os::LinuxLegacy | Os::Solaris => "so",
+                Os::MacOSX => "dylib",
+                Os::Windows => "dll"
+            };
+            let libudb_api: String = format!("scitools/bin/{os}{arch}/libudb_api.{ext}",
+                                             os = os,
+                                             arch = arch,
+                                             ext = ext
+            );
+
+            let output = Command::new("tar")
+                .arg("xf")
+                .arg(understand_pathbuf.as_os_str())
+                .arg(libudb_api)
+                .arg("--strip=3")
+                .current_dir(ext_pathbuf.as_path())
+                .output()
+                .unwrap_or_else(|e| {
+                    panic!("tar executed with error:\n{}", e)
+                });
+            if !output.status.success() {
+                panic!("tar executed with error:\n{}",
+                    String::from_utf8_lossy(&output.stderr))
+            }
         }
     }
-
-    /*
-    println!("understand_pathbuf: {}", understand_pathbuf.to_string_lossy());
-    println!("out_dir: {}", out_dir);
-    println!("cargo_manifest_dir: {}", cargo_manifest_dir);
-    */
+    println!("cargo:rustc-link-lib=udb_api");
+    println!("cargo:rustc-link-search={}", ext_pathbuf.display());
 }
