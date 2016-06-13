@@ -103,44 +103,44 @@ fn main() {
                 panic!("curl executed with error:\n{}",
                     String::from_utf8_lossy(&output.stderr))
             }
-        } else {
-            let os: &'static str = match UNDERSTAND_RELEASE.os {
-                Os::Linux | Os::LinuxLegacy => "linux",
-                Os::Windows => "windows",
-                // TODO Solaris, MacOS, etc
-                _ => "???"
-            };
-            let arch: &'static str = match UNDERSTAND_RELEASE.arch {
-                Arch::Bit32 => "32",
-                Arch::Bit64 => "64",
-                // TODO Sparc, x86
-                _ => "???"
-            };
-            let ext: &'static str = match UNDERSTAND_RELEASE.os {
-                Os::Linux | Os::LinuxLegacy | Os::Solaris => "so",
-                Os::MacOSX => "dylib",
-                Os::Windows => "dll"
-            };
-            let libudb_api: String = format!("scitools/bin/{os}{arch}/libudb_api.{ext}",
-                                             os = os,
-                                             arch = arch,
-                                             ext = ext
-            );
+        }
 
-            let output = Command::new("tar")
-                .arg("xf")
-                .arg(understand_pathbuf.as_os_str())
-                .arg(libudb_api)
-                .arg("--strip=3")
-                .current_dir(ext_pathbuf.as_path())
-                .output()
-                .unwrap_or_else(|e| {
-                    panic!("tar executed with error:\n{}", e)
-                });
-            if !output.status.success() {
-                panic!("tar executed with error:\n{}",
-                    String::from_utf8_lossy(&output.stderr))
-            }
+        let os: &'static str = match UNDERSTAND_RELEASE.os {
+            Os::Linux | Os::LinuxLegacy => "linux",
+            Os::Windows => "windows",
+            // TODO Solaris, MacOS, etc
+            _ => "???"
+        };
+        let arch: &'static str = match UNDERSTAND_RELEASE.arch {
+            Arch::Bit32 => "32",
+            Arch::Bit64 => "64",
+            // TODO Sparc, x86
+            _ => "???"
+        };
+        let ext: &'static str = match UNDERSTAND_RELEASE.os {
+            Os::Linux | Os::LinuxLegacy | Os::Solaris => "so",
+            Os::MacOSX => "dylib",
+            Os::Windows => "dll"
+        };
+        let libudb_api: String = format!("scitools/bin/{os}{arch}/libudb_api.{ext}",
+                                            os = os,
+                                            arch = arch,
+                                            ext = ext
+        );
+
+        let output = Command::new("tar")
+            .arg("xf")
+            .arg(understand_pathbuf.as_os_str())
+            .arg(libudb_api)
+            .arg("--strip=3")
+            .current_dir(ext_pathbuf.as_path())
+            .output()
+            .unwrap_or_else(|e| {
+                panic!("tar executed with error:\n{}", e)
+            });
+        if !output.status.success() {
+            panic!("tar executed with error:\n{}",
+                String::from_utf8_lossy(&output.stderr))
         }
     }
     println!("cargo:rustc-link-lib=udb_api");
