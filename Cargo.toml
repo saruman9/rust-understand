@@ -6,7 +6,7 @@ authors = ["saruman9 <rum.274.4@gmail.com>"]
 description = "SciTools Understand API bindings for Rust"
 repository = "https://gitlab.com/saruman9/understand-rust"
 readme = "README.md"
-keywords = ["understand", "scitools", "analyzer"]
+keywords = ["understand", "scitools", "analyzer", "API"]
 license = "MIT"
 
 [depedencies.understand-sys]
