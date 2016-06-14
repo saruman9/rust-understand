@@ -41,6 +41,7 @@ pub type UdbCommentFormat = UdbCommentFormat_;
 
 #[allow(non_camel_case_types)]
 #[derive(Debug)]
+#[derive(Copy, Clone)]
 #[repr(u16)]
 pub enum UdbLanguage_ {
     Udb_language_NONE    = 0x0000,
