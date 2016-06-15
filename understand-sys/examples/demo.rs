@@ -46,18 +46,41 @@ fn main() {
         println!("{:?}", lang);
     }
 
-    let udb_language_strings = unsafe { udbLanguageStrings(udb_languages) };
-    println!("{:?}", udb_language_strings);
-
+    // Get list of all entities and print it's long names
     /*
-    let udb_languages_strings: Vec<&CStr> = unsafe {
-        let vec: Vec<&CStr> = vec![];
-        for i in 
-        // CStr::from_ptr(udbLanguageStrings(udb_languages))
-        vec
-    };
+    unsafe {
+        let mut udb_list_entities: *mut UdbEntity = mem::uninitialized::<*mut UdbEntity>();
+        let mut udb_counts_entities: i32 = 0;
+        udbListEntity(&mut udb_list_entities, &mut udb_counts_entities);
+
+        println!("udb_counts_entities: {}", udb_counts_entities);
+        for i in 0..udb_counts_entities {
+            let name: &CStr = CStr::from_ptr(udbEntityNameLong(*udb_list_entities.offset(i as isize)));
+            println!("{}", name.to_string_lossy());
+        }
+
+        udbListEntityFree(udb_list_entities);
+    }
     */
 
+    // Get list of all analyzed files
+    /*
+    unsafe {
+        let mut udb_list_files: *mut UdbEntity = mem::uninitialized::<*mut UdbEntity>();
+        let mut udb_counts_files: i32 = 0;
+        udbListFile(&mut udb_list_files, &mut udb_counts_files);
+
+        println!("udb_counts_files: {}", udb_counts_files);
+        for i in 0..udb_counts_files {
+            let name: &CStr = CStr::from_ptr(udbEntityNameRelative(*udb_list_files.offset(i as isize)));
+            println!("{}", name.to_string_lossy());
+        }
+
+        udbListEntityFree(udb_list_files);
+    }
+    */
+
+    // Freed ptr of database
     unsafe { udbDbClose() };
 }
 
