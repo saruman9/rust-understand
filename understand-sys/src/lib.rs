@@ -155,14 +155,14 @@ extern {
     pub fn udbComment(entity : UdbEntity,
                       style  : UdbCommentStyle,
                       foramt : UdbCommentFormat,
-                      kinds  : UdbKindList) -> *mut c_char;
+                      kinds  : UdbKindList) -> *const c_char;
 
     // Lookup the comments associated with the specified entity and return a
     // temporary array of raw comment strings.
     pub fn udbCommentRaw(entity        : UdbEntity,
                          style         : UdbCommentStyle,
                          kinds         : UdbKindList,
-                         commentString : *mut *mut *mut c_char,
+                         commentString : *mut *const *const c_char,
                          len           : *mut c_int);
 
     pub fn udbDbClose();
@@ -212,22 +212,22 @@ extern {
 
     // Return the entity long name as a temporary string. If there is no long name
     // the short name is returned.
-    pub fn udbEntityNameLong(entity: UdbEntity) -> *mut c_char;
+    pub fn udbEntityNameLong(entity: UdbEntity) -> *const c_char;
 
     // Return the absolute name for file entity as a temporary string.
-    pub fn udbEntityNameAbsolute(entity: UdbEntity) -> *mut c_char;
+    pub fn udbEntityNameAbsolute(entity: UdbEntity) -> *const c_char;
 
     // Return the relative name for file entity as a temporary string.
-    pub fn udbEntityNameRelative(entity: UdbEntity) -> *mut c_char;
+    pub fn udbEntityNameRelative(entity: UdbEntity) -> *const c_char;
 
     // Return the entity short name as a temporary string.
-    pub fn udbEntityNameShort(entity: UdbEntity) -> *mut c_char;
+    pub fn udbEntityNameShort(entity: UdbEntity) -> *const c_char;
 
     // Return the entity simple name as a temporary string.
-    pub fn udbEntityNameSimple(entity: UdbEntity) -> *mut c_char;
+    pub fn udbEntityNameSimple(entity: UdbEntity) -> *const c_char;
 
     // Return the entity unique name as a temporary string.
-    pub fn udbEntityNameUnique(entity: UdbEntity) -> *mut c_char;
+    pub fn udbEntityNameUnique(entity: UdbEntity) -> *const c_char;
 
     // Return true if entity can have parameters. If text is specified return a
     // temporary string of parameters prototype. If showname is specified include
@@ -246,16 +246,16 @@ extern {
                          refs     : *mut *mut UdbReference) -> c_int;
 
     // Return the entity typetext as a temporary string.
-    pub fn udbEntityTypetext(entity: UdbEntity) -> *mut c_char;
+    pub fn udbEntityTypetext(entity: UdbEntity) -> *const c_char;
 
     // Return a temporary string of the value associated with certain entities
     // such as enumerators, initialized variables, default parameter values in
     // function definitions and macros.
-    pub fn udbEntityValue(entity: UdbEntity) -> *mut c_char;
+    pub fn udbEntityValue(entity: UdbEntity) -> *const c_char;
 
     // Return the entity freetext as a temporary string.
     pub fn udbEntityFreetext(entity : UdbEntity,
-                             kind   : *const c_char) -> *mut c_char;
+                             kind   : *const c_char) -> *const c_char;
 
     // Return the current build.
     pub fn udbInfoBuild() -> *const c_char;
@@ -289,14 +289,14 @@ extern {
                          kindlist : UdbKindList) -> c_int;
 
     // Return the long name of kind as a temporary string.
-    pub fn udbKindLongname(kind: UdbKind) -> *mut c_char;
+    pub fn udbKindLongname(kind: UdbKind) -> *const c_char;
 
     // Parse the kind text and return an allocated kindlist that must be freed
     // with udbKindListFree().
     pub fn udbKindParse(text: *const c_char) -> UdbKindList;
 
     // Return the short name of kind as a temporary string.
-    pub fn udbKindShortname(kind: UdbKind) -> *mut c_char;
+    pub fn udbKindShortname(kind: UdbKind) -> *const c_char;
 
     // Return an array of text representations for a single or multiple language.
     // An entity has a single language but a database may have multiple
@@ -335,7 +335,7 @@ extern {
     pub fn udbLexemeReference(lexeme: UdbLexeme) -> UdbReference;
 
     // Return the lexeme text as a temporary string.
-    pub fn udbLexemeText(lexeme: UdbLexeme) -> *mut c_char;
+    pub fn udbLexemeText(lexeme: UdbLexeme) -> *const c_char;
 
     // Return the lexeme token.
     pub fn udbLexemeToken(lexeme: UdbLexeme) -> UdbToken;
@@ -399,7 +399,7 @@ extern {
     pub fn udbLibraryListFree(liblist: *mut UdbLibrary);
 
     // Return the library name as a temporary string.
-    pub fn udbLibraryName(library: UdbLibrary) -> *mut c_char;
+    pub fn udbLibraryName(library: UdbLibrary) -> *const c_char;
 
     // Return a non-allocated, permanent list of all entities. After a database
     // update, the list is invalid and must be retrieved again. Ths list may be
@@ -502,10 +502,10 @@ extern {
                                     kindlist : UdbKindList) -> c_int;
 
     // Return the description of the specified metric, as a temporary string.
-    pub fn udbMetricDescription(metric: UdbMetric) -> *mut c_char;
+    pub fn udbMetricDescription(metric: UdbMetric) -> *const c_char;
 
     // Return the descriptive name of the specified metric, as a temporary string.
-    pub fn udbMetricDescriptiveName(metric: UdbMetric) -> *mut c_char;
+    pub fn udbMetricDescriptiveName(metric: UdbMetric) -> *const c_char;
 
     // Return true if the specified metric is defined for the specified entity.
     pub fn udbMetricIsDefinedEntity(metric: UdbMetric,

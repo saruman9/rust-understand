@@ -54,7 +54,7 @@ impl fmt::Display for Os {
 const UNDERSTAND_RELEASE: UnderstandVersion = UnderstandVersion {
     major: 4,
     minor: 0,
-    build: 833,
+    build: 844,
     os: Os::Linux,
     arch: Arch::Bit64
 };
