@@ -1,6 +1,6 @@
 use std::os::raw::{c_char, c_int, c_double};
 
-// Opaque structs transform to enum
+// Opaque structures transform to enumerate
 pub enum UdbEntity_ {}
 pub enum UdbKindList_ {}
 pub enum UdbLexeme_ {}
@@ -154,7 +154,7 @@ extern {
     // temporary, formatted string.
     pub fn udbComment(entity : UdbEntity,
                       style  : UdbCommentStyle,
-                      foramt : UdbCommentFormat,
+                      format : UdbCommentFormat,
                       kinds  : UdbKindList) -> *const c_char;
 
     // Lookup the comments associated with the specified entity and return a
@@ -402,7 +402,7 @@ extern {
     pub fn udbLibraryName(library: UdbLibrary) -> *const c_char;
 
     // Return a non-allocated, permanent list of all entities. After a database
-    // update, the list is invalid and must be retrieved again. Ths list may be
+    // update, the list is invalid and must be retrieved again. This list may be
     // used in places where an allocated entity list is required and may be
     // safely passed to udbListEntityFree().
     pub fn udbListEntity(list  : *mut *mut UdbEntity,
