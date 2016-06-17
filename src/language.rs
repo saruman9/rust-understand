@@ -1,5 +1,6 @@
 use std::fmt;
 
+
 #[derive(Clone)]
 pub enum Language {
     NONE,
@@ -43,4 +44,8 @@ impl fmt::Display for Language {
             Language::Web     => write!(f, "{}", "Web"),
         }
     }
+}
+
+pub trait InitLanguage {
+    fn init_language(&mut self);
 }
