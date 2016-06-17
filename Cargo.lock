@@ -1,4 +1,11 @@
 [root]
 name = "understand"
 version = "0.1.0"
+dependencies = [
+ "understand-sys 0.1.0",
+]
+
+[[package]]
+name = "understand-sys"
+version = "0.1.0"
 

@@ -9,7 +9,7 @@ readme = "README.md"
 keywords = ["understand", "scitools", "analyzer", "API"]
 license = "MIT"
 
-[depedencies.understand-sys]
+[dependencies.understand-sys]
 path = "understand-sys"
 version = "0.1.0"
 
