@@ -2,24 +2,26 @@ extern crate understand_sys;
 
 use std::path::PathBuf;
 use std::ffi::{CString, CStr};
+use std::mem;
 
 use language::Language;
 use status::Status;
+use entity::Entity;
 
 use understand_sys::{UdbEntity, udbDbOpen, udbDbLanguage, udbDbName, udbInfoBuild, UdbStatus,
-UdbLanguage_, UdbLanguage, udbDbClose};
+UdbLanguage_, UdbLanguage, udbDbClose, udbListEntity, udbListEntityFree};
 
 pub struct Db<'db> {
     pub name      : &'db str,
     pub path      : PathBuf,
-    pub languages : Vec<Language>,
-    pub ents      : Vec<UdbEntity>,
+    pub languages : Option<Vec<Language>>,
+    pub ents      : Option<Vec<Entity<'db>>>,
     pub version   : &'db str,
     pub status    : Status,
 }
 
 impl<'db> Db<'db> {
-    pub fn new(path: &str) -> Db {
+    pub fn new(path: &str) -> Self {
         unsafe {
             let udb_status = udbDbOpen(CString::new(path).unwrap().as_ptr());
             let udb_languages = udbDbLanguage();
@@ -28,7 +30,7 @@ impl<'db> Db<'db> {
                 name      : CStr::from_ptr(udbDbName()).to_str().unwrap(),
                 path      : PathBuf::from(path),
                 languages : Db::get_languages(udb_languages),
-                ents      : vec!(),
+                ents      : Db::get_entities(),
                 version   : CStr::from_ptr(udbInfoBuild()).to_str().unwrap(),
                 status    : Db::get_status(udb_status),
             }
@@ -81,7 +83,7 @@ impl<'db> Db<'db> {
         }
     }
 
-    fn get_languages(language: UdbLanguage) -> Vec<Language> {
+    fn get_languages(language: UdbLanguage) -> Option<Vec<Language>> {
         let lang: u16 = language as u16;
         let mut ret: Vec<Language> = vec!();
         if lang & UdbLanguage_::Udb_language_Ada as u16 != 0     { ret.push(Language::Ada) };
@@ -100,9 +102,22 @@ impl<'db> Db<'db> {
         if lang & UdbLanguage_::Udb_language_Vhdl as u16 != 0    { ret.push(Language::Vhdl) };
         if lang & UdbLanguage_::Udb_language_Web as u16 != 0     { ret.push(Language::Web) };
         if ret.is_empty() {
-            vec!(Language::NONE)
+            None
         } else {
-            ret
+            Some(ret)
+        }
+    }
+
+    fn get_entities() -> Option<Vec<Entity<'db>>> {
+        unsafe {
+            let mut udb_list_ents: *mut UdbEntity = mem::uninitialized();
+            let mut udb_count_ents: i32 = 0;
+
+            udbListEntity(&mut udb_list_ents, &mut udb_count_ents);
+            let list_ents: Option<Vec<Entity>> = Entity::from_raw_list_ents(udb_list_ents, udb_count_ents);
+
+            udbListEntityFree(udb_list_ents);
+            list_ents
         }
     }
 }
