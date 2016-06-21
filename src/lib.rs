@@ -6,6 +6,7 @@ pub mod status;
 pub mod language;
 pub mod db;
 pub mod entity;
+pub mod kind;
 
 #[derive(Debug)]
 pub enum Error {
