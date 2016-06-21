@@ -26,14 +26,19 @@ impl<'db> Db<'db> {
             let udb_status = udbDbOpen(CString::new(path).unwrap().as_ptr());
             let udb_languages = udbDbLanguage();
 
-            Db {
+            let ret = Db {
                 name      : CStr::from_ptr(udbDbName()).to_str().unwrap(),
                 path      : PathBuf::from(path),
                 languages : Db::get_languages(udb_languages),
                 ents      : Db::get_entities(),
                 version   : CStr::from_ptr(udbInfoBuild()).to_str().unwrap(),
                 status    : Db::get_status(udb_status),
-            }
+            };
+
+            udbDbClose();
+
+            ret
+            // TODO drop (free UDB) after all complete?
         }
     }
 
@@ -115,15 +120,16 @@ impl<'db> Db<'db> {
 
             udbListEntity(&mut udb_list_ents, &mut udb_count_ents);
             let list_ents: Option<Vec<Entity>> = Entity::from_raw_list_ents(udb_list_ents, udb_count_ents);
-
             udbListEntityFree(udb_list_ents);
+
             list_ents
         }
     }
 }
 
+/*
 impl<'db> Drop for Db<'db> {
     fn drop(&mut self) {
-        unsafe { udbDbClose() }
     }
 }
+*/
