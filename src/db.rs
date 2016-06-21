@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use std::ffi::{CString, CStr};
 use std::mem;
 
-use language::Language;
+use language::Lang;
 use status::Status;
 use entity::Entity;
 
@@ -14,7 +14,7 @@ UdbLanguage_, UdbLanguage, udbDbClose, udbListEntity, udbListEntityFree};
 pub struct Db<'db> {
     pub name      : &'db str,
     pub path      : PathBuf,
-    pub languages : Option<Vec<Language>>,
+    pub languages : Option<Vec<Lang>>,
     pub ents      : Option<Vec<Entity<'db>>>,
     pub version   : &'db str,
     pub status    : Status,
@@ -83,24 +83,24 @@ impl<'db> Db<'db> {
         }
     }
 
-    fn get_languages(language: UdbLanguage) -> Option<Vec<Language>> {
+    fn get_languages(language: UdbLanguage) -> Option<Vec<Lang>> {
         let lang: u16 = language as u16;
-        let mut ret: Vec<Language> = vec!();
-        if lang & UdbLanguage_::Udb_language_Ada as u16 != 0     { ret.push(Language::Ada) };
-        if lang & UdbLanguage_::Udb_language_Asm as u16 != 0     { ret.push(Language::Asm) };
-        if lang & UdbLanguage_::Udb_language_Basic as u16 != 0   { ret.push(Language::Basic) };
-        if lang & UdbLanguage_::Udb_language_C as u16 != 0       { ret.push(Language::C) };
-        if lang & UdbLanguage_::Udb_language_Cobol as u16 != 0   { ret.push(Language::Cobol) };
-        if lang & UdbLanguage_::Udb_language_CSharp as u16 != 0  { ret.push(Language::CSharp) };
-        if lang & UdbLanguage_::Udb_language_Fortran as u16 != 0 { ret.push(Language::Fortran) };
-        if lang & UdbLanguage_::Udb_language_Java as u16 != 0    { ret.push(Language::Java) };
-        if lang & UdbLanguage_::Udb_language_Jovial as u16 != 0  { ret.push(Language::Jovial) };
-        if lang & UdbLanguage_::Udb_language_Pascal as u16 != 0  { ret.push(Language::Pascal) };
-        if lang & UdbLanguage_::Udb_language_Plm as u16 != 0     { ret.push(Language::Plm) };
-        if lang & UdbLanguage_::Udb_language_Python as u16 != 0  { ret.push(Language::Python) };
-        if lang & UdbLanguage_::Udb_language_Verilog as u16 != 0 { ret.push(Language::Verilog) };
-        if lang & UdbLanguage_::Udb_language_Vhdl as u16 != 0    { ret.push(Language::Vhdl) };
-        if lang & UdbLanguage_::Udb_language_Web as u16 != 0     { ret.push(Language::Web) };
+        let mut ret: Vec<Lang> = vec!();
+        if lang & UdbLanguage_::Udb_language_Ada as u16 != 0     { ret.push(Lang::Ada) };
+        if lang & UdbLanguage_::Udb_language_Asm as u16 != 0     { ret.push(Lang::Asm) };
+        if lang & UdbLanguage_::Udb_language_Basic as u16 != 0   { ret.push(Lang::Basic) };
+        if lang & UdbLanguage_::Udb_language_C as u16 != 0       { ret.push(Lang::C) };
+        if lang & UdbLanguage_::Udb_language_Cobol as u16 != 0   { ret.push(Lang::Cobol) };
+        if lang & UdbLanguage_::Udb_language_CSharp as u16 != 0  { ret.push(Lang::CSharp) };
+        if lang & UdbLanguage_::Udb_language_Fortran as u16 != 0 { ret.push(Lang::Fortran) };
+        if lang & UdbLanguage_::Udb_language_Java as u16 != 0    { ret.push(Lang::Java) };
+        if lang & UdbLanguage_::Udb_language_Jovial as u16 != 0  { ret.push(Lang::Jovial) };
+        if lang & UdbLanguage_::Udb_language_Pascal as u16 != 0  { ret.push(Lang::Pascal) };
+        if lang & UdbLanguage_::Udb_language_Plm as u16 != 0     { ret.push(Lang::Plm) };
+        if lang & UdbLanguage_::Udb_language_Python as u16 != 0  { ret.push(Lang::Python) };
+        if lang & UdbLanguage_::Udb_language_Verilog as u16 != 0 { ret.push(Lang::Verilog) };
+        if lang & UdbLanguage_::Udb_language_Vhdl as u16 != 0    { ret.push(Lang::Vhdl) };
+        if lang & UdbLanguage_::Udb_language_Web as u16 != 0     { ret.push(Lang::Web) };
         if ret.is_empty() {
             None
         } else {
