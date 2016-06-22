@@ -7,18 +7,21 @@ use language::Language;
 use understand_sys::{UdbKind, udbKindLongname, udbKindShortname, udbIsKindFile,
 udbKindLanguage};
 
-pub struct Kind<'kind> {
-    pub name_long: &'kind str,
-    pub name_short: &'kind str,
+#[derive(Clone)]
+pub struct Kind {
+    pub name_long: String,
+    pub name_short: String,
     pub is_file: bool,
     pub language: Option<Language>,
 }
 
-impl<'kind> Kind<'kind> {
+impl Kind {
     pub fn from_raw_kind(kind: UdbKind) -> Self {
         unsafe {
-            let name_long: &str = CStr::from_ptr(udbKindLongname(kind)).to_str().unwrap();
-            let name_short: &str = CStr::from_ptr(udbKindShortname(kind)).to_str().unwrap();
+            let name_long: String = CStr::from_ptr(udbKindLongname(kind))
+                .to_string_lossy().into_owned();
+            let name_short: String = CStr::from_ptr(udbKindShortname(kind))
+                .to_string_lossy().into_owned();
             let is_file: bool;
             if udbIsKindFile(kind) != 0 {
                 is_file = true;

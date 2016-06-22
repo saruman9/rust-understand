@@ -11,27 +11,27 @@ use entity::Entity;
 use understand_sys::{UdbEntity, udbDbOpen, udbDbLanguage, udbDbName, udbInfoBuild, UdbStatus,
 UdbLanguage_, UdbLanguage, udbDbClose, udbListEntity, udbListEntityFree};
 
-pub struct Db<'db> {
-    pub name      : &'db str,
+pub struct Db {
+    pub name      : String,
     pub path      : PathBuf,
     pub languages : Option<Vec<Lang>>,
-    pub ents      : Option<Vec<Entity<'db>>>,
-    pub version   : &'db str,
+    pub ents      : Option<Vec<Entity>>,
+    pub version   : String,
     pub status    : Status,
 }
 
-impl<'db> Db<'db> {
+impl Db {
     pub fn new(path: &str) -> Self {
         unsafe {
             let udb_status = udbDbOpen(CString::new(path).unwrap().as_ptr());
             let udb_languages = udbDbLanguage();
 
             let ret = Db {
-                name      : CStr::from_ptr(udbDbName()).to_str().unwrap(),
+                name      : CStr::from_ptr(udbDbName()).to_string_lossy().into_owned(),
                 path      : PathBuf::from(path),
                 languages : Db::get_languages(udb_languages),
                 ents      : Db::get_entities(),
-                version   : CStr::from_ptr(udbInfoBuild()).to_str().unwrap(),
+                version   : CStr::from_ptr(udbInfoBuild()).to_string_lossy().into_owned(),
                 status    : Db::get_status(udb_status),
             };
 
@@ -113,7 +113,7 @@ impl<'db> Db<'db> {
         }
     }
 
-    fn get_entities() -> Option<Vec<Entity<'db>>> {
+    fn get_entities() -> Option<Vec<Entity>> {
         unsafe {
             let mut udb_list_ents: *mut UdbEntity = mem::uninitialized();
             let mut udb_count_ents: i32 = 0;

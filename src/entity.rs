@@ -11,45 +11,46 @@ udbEntityNameUnique, udbEntityNameLong, udbEntityNameSimple,
 udbEntityNameAbsolute, udbEntityNameShort, udbEntityNameRelative, udbEntityKind};
 
 
-pub struct Entity<'ent> {
+#[derive(Clone)]
+pub struct Entity {
     pub id            : i32,
-    pub name_unique   : &'ent str,
-    pub name_long     : &'ent str,
-    pub name_simple   : &'ent str,
-    pub name_short    : &'ent str,
-    pub kind          : Kind<'ent>,
+    pub name_unique   : String,
+    pub name_long     : String,
+    pub name_simple   : String,
+    pub name_short    : String,
+    pub kind          : Kind,
     pub language      : Option<Language>,
     pub library       : Option<UdbLibrary>,
-    pub contents      : Option<&'ent str>,
+    pub contents      : Option<String>,
     pub references    : Option<Vec<UdbReference>>,
-    pub typetext      : Option<&'ent str>,
-    pub freetext      : Option<&'ent str>,
-    pub parameters    : Option<Vec<&'ent str>>,
-    pub value         : Option<&'ent str>,
+    pub typetext      : Option<String>,
+    pub freetext      : Option<String>,
+    pub parameters    : Option<Vec<String>>,
+    pub value         : Option<String>,
     // TODO Remove?
-    pub name_absolute : Option<&'ent str>,
-    pub name_relative : Option<&'ent str>,
+    pub name_absolute : Option<String>,
+    pub name_relative : Option<String>,
 }
 
-impl<'ent> Entity<'ent> {
+impl Entity {
     pub fn from_raw_list_ents(udb_list_ents: *mut UdbEntity, udb_count_ents: i32) -> Option<Vec<Self>> {
         let mut ret: Vec<Entity> = vec!();
         unsafe {
             for i in 0..udb_count_ents {
                 let entity: UdbEntity = *udb_list_ents.offset(i as isize);
                 let id: i32 = udbEntityId(entity) as i32;
-                let name_unique: &str = CStr::from_ptr(
+                let name_unique: String = CStr::from_ptr(
                     udbEntityNameUnique(entity))
-                    .to_str().unwrap();
-                let name_long: &str = CStr::from_ptr(
+                    .to_string_lossy().into_owned();
+                let name_long: String = CStr::from_ptr(
                     udbEntityNameLong(entity))
-                    .to_str().unwrap();
-                let name_simple: &str = CStr::from_ptr(
+                    .to_string_lossy().into_owned();
+                let name_simple: String = CStr::from_ptr(
                     udbEntityNameSimple(entity))
-                    .to_str().unwrap();
-                let name_short: &str = CStr::from_ptr(
+                    .to_string_lossy().into_owned();
+                let name_short: String = CStr::from_ptr(
                     udbEntityNameShort(entity))
-                    .to_str().unwrap();
+                    .to_string_lossy().into_owned();
                 let kind: Kind = Kind::from_raw_kind(udbEntityKind(entity));
                 /*
                 let name_absolute: &CStr = CStr::from_ptr(
