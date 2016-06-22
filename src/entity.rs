@@ -1,14 +1,13 @@
 extern crate understand_sys;
 
-use std::mem;
 use std::ffi::CStr;
 
 use language::Language;
 use kind::Kind;
 
-use understand_sys::{UdbReference, UdbKind, UdbLibrary, UdbEntity, udbEntityId,
-udbEntityNameUnique, udbEntityNameLong, udbEntityNameSimple,
-udbEntityNameAbsolute, udbEntityNameShort, udbEntityNameRelative, udbEntityKind};
+use understand_sys::{UdbReference, UdbLibrary, UdbEntity, udbEntityId,
+udbEntityNameUnique, udbEntityNameLong, udbEntityNameSimple, udbEntityNameShort,
+udbEntityKind, udbEntityLanguage};
 
 
 #[derive(Clone)]
@@ -59,6 +58,7 @@ impl Entity {
                     udbEntityNameRelative(entity))
                     .to_str().ok();
                 */
+                let language: Option<Language> = Language::from_raw_language(udbEntityLanguage(entity));
 
                 ret.push(Entity{
                     id            : id,
@@ -69,7 +69,7 @@ impl Entity {
                     name_absolute : None,
                     name_relative : None,
                     kind          : kind,
-                    language      : None,
+                    language      : language,
                     library       : None,
                     contents      : None,
                     references    : None,

@@ -26,6 +26,7 @@ pub enum Lang {
     Web,
 }
 
+#[derive(Clone)]
 pub struct Language {
     name: Lang,
 }
