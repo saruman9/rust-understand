@@ -52,6 +52,7 @@ impl Entity {
                     .to_string_lossy().into_owned();
                 let kind: Kind = Kind::from_raw_kind(udbEntityKind(entity));
                 /*
+                // Don't work API - segmentation fault
                 let name_absolute: &CStr = CStr::from_ptr(
                     udbEntityNameAbsolute(entity));
                 let name_relative: Option<&str> = CStr::from_ptr(
