@@ -4,10 +4,11 @@ use std::ffi::CStr;
 
 use language::Language;
 use kind::Kind;
+use library::Library;
 
-use understand_sys::{UdbReference, UdbLibrary, UdbEntity, udbEntityId,
-udbEntityNameUnique, udbEntityNameLong, udbEntityNameSimple, udbEntityNameShort,
-udbEntityKind, udbEntityLanguage};
+use understand_sys::{UdbReference, UdbEntity, udbEntityId, udbEntityNameUnique,
+udbEntityNameLong, udbEntityNameSimple, udbEntityNameShort, udbEntityKind,
+udbEntityLanguage, udbEntityLibrary, udbEntityTypetext, udbEntityValue};
 
 
 #[derive(Clone)]
@@ -19,7 +20,7 @@ pub struct Entity {
     pub name_short    : String,
     pub kind          : Kind,
     pub language      : Option<Language>,
-    pub library       : Option<UdbLibrary>,
+    pub library       : Option<Library>,
     pub contents      : Option<String>,
     pub references    : Option<Vec<UdbReference>>,
     pub typetext      : Option<String>,
@@ -60,6 +61,23 @@ impl Entity {
                     .to_str().ok();
                 */
                 let language: Option<Language> = Language::from_raw_language(udbEntityLanguage(entity));
+                let library: Option<Library> = Library::from_raw_library(udbEntityLibrary(entity));
+
+                let typetext_raw: String = CStr::from_ptr(udbEntityTypetext(entity)).to_string_lossy().into_owned();
+                let typetext: Option<String>;
+                if typetext_raw.is_empty() {
+                    typetext = None;
+                } else {
+                    typetext = Some(typetext_raw);
+                }
+
+                let value_raw: String = CStr::from_ptr(udbEntityValue(entity)).to_string_lossy().into_owned();
+                let value: Option<String>;
+                if value_raw.is_empty() {
+                    value = None;
+                } else {
+                    value = Some(value_raw);
+                }
 
                 ret.push(Entity{
                     id            : id,
@@ -71,13 +89,13 @@ impl Entity {
                     name_relative : None,
                     kind          : kind,
                     language      : language,
-                    library       : None,
+                    library       : library,
                     contents      : None,
                     references    : None,
-                    typetext      : None,
+                    typetext      : typetext,
                     freetext      : None,
                     parameters    : None,
-                    value         : None,
+                    value         : value,
                 });
             }
         }

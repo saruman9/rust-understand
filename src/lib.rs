@@ -7,6 +7,7 @@ pub mod language;
 pub mod db;
 pub mod entity;
 pub mod kind;
+pub mod library;
 
 #[derive(Debug)]
 pub enum Error {
