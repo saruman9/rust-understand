@@ -1,6 +1,6 @@
 extern crate understand_sys;
 
-use std::ffi::CStr;
+use std::ffi::{CStr, CString};
 
 use language::Language;
 use kind::Kind;
@@ -8,7 +8,8 @@ use library::Library;
 
 use understand_sys::{UdbReference, UdbEntity, udbEntityId, udbEntityNameUnique,
 udbEntityNameLong, udbEntityNameSimple, udbEntityNameShort, udbEntityKind,
-udbEntityLanguage, udbEntityLibrary, udbEntityTypetext, udbEntityValue};
+udbEntityLanguage, udbEntityLibrary, udbEntityTypetext, udbEntityValue,
+udbEntityFreetext};
 
 
 #[derive(Clone)]
@@ -21,10 +22,12 @@ pub struct Entity {
     pub kind          : Kind,
     pub language      : Option<Language>,
     pub library       : Option<Library>,
+    // TODO Contents too large
     pub contents      : Option<String>,
     pub references    : Option<Vec<UdbReference>>,
     pub typetext      : Option<String>,
-    pub freetext      : Option<String>,
+    pub cgraph        : Option<String>,
+    // TOOD needed?
     pub parameters    : Option<Vec<String>>,
     pub value         : Option<String>,
     // TODO Remove?
@@ -79,6 +82,17 @@ impl Entity {
                     value = Some(value_raw);
                 }
 
+                let cgraph_text_raw = CString::new("CGraph").unwrap().as_ptr();
+                let cgraph_raw: String = CStr::from_ptr(udbEntityFreetext(entity, cgraph_text_raw))
+                    .to_string_lossy()
+                    .into_owned();
+                let cgraph: Option<String>;
+                if cgraph_raw.is_empty() {
+                    cgraph = None;
+                } else {
+                    cgraph = Some(cgraph_raw);
+                }
+
                 ret.push(Entity{
                     id            : id,
                     name_unique   : name_unique,
@@ -93,7 +107,7 @@ impl Entity {
                     contents      : None,
                     references    : None,
                     typetext      : typetext,
-                    freetext      : None,
+                    cgraph        : cgraph,
                     parameters    : None,
                     value         : value,
                 });
