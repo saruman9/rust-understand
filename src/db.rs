@@ -8,8 +8,9 @@ use language::Lang;
 use status::Status;
 use entity::Entity;
 
-use understand_sys::{UdbEntity, udbDbOpen, udbDbLanguage, udbDbName, udbInfoBuild, UdbStatus,
-UdbLanguage_, UdbLanguage, udbDbClose, udbListEntity, udbListEntityFree};
+use understand_sys::{UdbEntity, udbDbOpen, udbDbLanguage, udbDbName,
+udbInfoBuild, UdbStatus, UdbLanguage_, UdbLanguage, udbDbClose, udbListEntity,
+udbListEntityFree};
 
 pub struct Db {
     pub name      : String,
@@ -34,8 +35,6 @@ impl Db {
                 version   : CStr::from_ptr(udbInfoBuild()).to_string_lossy().into_owned(),
                 status    : Db::get_status(udb_status),
             };
-
-            udbDbClose();
 
             ret
             // TODO drop (free UDB) after all complete?
@@ -127,9 +126,10 @@ impl Db {
     }
 }
 
-/*
-impl<'db> Drop for Db<'db> {
+impl Drop for Db {
     fn drop(&mut self) {
+        unsafe{
+            udbDbClose();
+        }
     }
 }
-*/
