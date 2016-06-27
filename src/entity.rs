@@ -1,4 +1,5 @@
 extern crate understand_sys;
+extern crate pbr;
 
 use std::ffi::{CStr, CString};
 use std::mem;
@@ -7,6 +8,8 @@ use language::Language;
 use kind::Kind;
 use library::Library;
 use reference::Reference;
+
+use self::pbr::ProgressBar;
 
 use understand_sys::{UdbReference, UdbEntity, udbEntityId, udbEntityNameUnique,
 udbEntityNameLong, udbEntityNameSimple, udbEntityNameShort, udbEntityKind,
@@ -117,8 +120,11 @@ impl Entity {
 
     pub fn from_raw_list_ents(udb_list_ents: *mut UdbEntity, udb_count_ents: i32) -> Option<Vec<Self>> {
         let mut ret: Vec<Entity> = vec!();
+        let mut pb = ProgressBar::new(udb_count_ents as u64);
+        pb.message("Create entities: ");
         unsafe {
             for i in 0..udb_count_ents {
+                pb.inc();
                 let entity: UdbEntity = *udb_list_ents.offset(i as isize);
                 ret.push(Entity::from_raw_entity(entity));
             }
