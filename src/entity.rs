@@ -1,5 +1,4 @@
 extern crate understand_sys;
-extern crate pbr;
 
 use std::ffi::{CStr, CString};
 use std::mem;

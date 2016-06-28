@@ -13,8 +13,5 @@ license = "MIT"
 path = "understand-sys"
 version = "0.1.0"
 
-[dependencies]
-pbr = "0.2"
-
 [lib]
 name = "understand"
