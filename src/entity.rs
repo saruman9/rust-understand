@@ -57,20 +57,18 @@ impl Entity {
     pub fn get_value(&self) -> Option<String> {
         unsafe {
             let value_raw: String = CStr::from_ptr(udbEntityValue(self.raw)).to_string_lossy().into_owned();
-            if value_raw.is_empty() {
-                None
-            } else {
-                Some(value_raw)
+            match value_raw.is_empty() {
+                false => Some(value_raw),
+                true  => None,
             }
         }
     }
     pub fn get_typetext(&self) -> Option<String> {
         unsafe {
             let typetext_raw: String = CStr::from_ptr(udbEntityTypetext(self.raw)).to_string_lossy().into_owned();
-            if typetext_raw.is_empty() {
-                None
-            } else {
-                Some(typetext_raw)
+            match typetext_raw.is_empty() {
+                false => Some(typetext_raw),
+                true  => None,
             }
         }
     }
@@ -79,10 +77,9 @@ impl Entity {
             let cgraph_text_raw = CString::new("CGraph").unwrap().as_ptr();
             let cgraph_raw: String = CStr::from_ptr(udbEntityFreetext(self.raw, cgraph_text_raw))
                 .to_string_lossy().into_owned();
-            if cgraph_raw.is_empty() {
-                None
-            } else {
-                Some(cgraph_raw)
+            match cgraph_raw.is_empty() {
+                false => Some(cgraph_raw),
+                true  => None,
             }
         }
     }
@@ -114,19 +111,19 @@ impl Entity {
     pub fn from_raw_entity(entity: UdbEntity) -> Self {
         unsafe {
             Entity{
-                id            : udbEntityId(entity) as i32,
-                raw           : entity,
+                id  : udbEntityId(entity) as i32,
+                raw : entity,
             }
         }
     }
 
     pub fn from_raw_list_ents(udb_list_ents: *mut UdbEntity, udb_count_ents: i32) -> Option<Vec<Self>> {
         let mut ret: Vec<Entity> = vec!();
-        let mut pb = ProgressBar::new(udb_count_ents as u64);
-        pb.message("Create entities: ");
+        //let mut pb = ProgressBar::new(udb_count_ents as u64);
+        //pb.message("Create entities: ");
         unsafe {
             for i in 0..udb_count_ents {
-                pb.inc();
+                //pb.inc();
                 let entity: UdbEntity = *udb_list_ents.offset(i as isize);
                 ret.push(Entity::from_raw_entity(entity));
             }
