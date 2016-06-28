@@ -5,7 +5,7 @@ use std::fmt;
 
 use understand_sys::{UdbLibrary, udbLibraryName};
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Library {
     pub name: String,
 }
