@@ -4,40 +4,71 @@ use std::path::PathBuf;
 use std::ffi::{CString, CStr};
 use std::mem;
 
-use language::Lang;
+use language::Language;
 use status::Status;
 use entity::Entity;
 
 use understand_sys::{UdbEntity, udbDbOpen, udbDbLanguage, udbDbName,
-udbInfoBuild, UdbStatus, UdbLanguage_, UdbLanguage, udbDbClose, udbListEntity,
+udbInfoBuild, UdbStatus, UdbLanguage_, udbDbClose, udbListEntity,
 udbListEntityFree};
 
 pub struct Db {
     pub name      : String,
     pub path      : PathBuf,
-    pub languages : Option<Vec<Lang>>,
-    pub ents      : Option<Vec<Entity>>,
     pub version   : String,
     pub status    : Status,
 }
 
 impl Db {
-    pub fn new(path: &str) -> Self {
+    pub fn open(path: &str) -> Self {
         unsafe {
             let udb_status = udbDbOpen(CString::new(path).unwrap().as_ptr());
-            let udb_languages = udbDbLanguage();
 
-            let ret = Db {
+            Db {
                 name      : CStr::from_ptr(udbDbName()).to_string_lossy().into_owned(),
                 path      : PathBuf::from(path),
-                languages : Db::get_languages(udb_languages),
-                ents      : Db::get_entities(),
                 version   : CStr::from_ptr(udbInfoBuild()).to_string_lossy().into_owned(),
                 status    : Db::get_status(udb_status),
-            };
+            }
+        }
+    }
+    pub fn get_entities(&self) -> Option<Vec<Entity>> {
+        unsafe {
+            let mut udb_list_ents: *mut UdbEntity = mem::uninitialized();
+            let mut udb_count_ents: i32 = 0;
 
-            ret
-            // TODO drop (free UDB) after all complete?
+            udbListEntity(&mut udb_list_ents, &mut udb_count_ents);
+            let list_ents: Option<Vec<Entity>> = Entity::from_raw_list_ents(udb_list_ents, udb_count_ents);
+            // TODO dangling pointers?
+            udbListEntityFree(udb_list_ents);
+
+            list_ents
+        }
+    }
+    pub fn get_languages(&self) -> Option<Vec<Language>> {
+        unsafe {
+            let lang: u16 = udbDbLanguage() as u16;
+            let mut ret: Vec<Language> = vec!();
+            if lang & UdbLanguage_::Udb_language_Ada as u16 != 0     { ret.push(Language::Ada) };
+            if lang & UdbLanguage_::Udb_language_Asm as u16 != 0     { ret.push(Language::Asm) };
+            if lang & UdbLanguage_::Udb_language_Basic as u16 != 0   { ret.push(Language::Basic) };
+            if lang & UdbLanguage_::Udb_language_C as u16 != 0       { ret.push(Language::C) };
+            if lang & UdbLanguage_::Udb_language_Cobol as u16 != 0   { ret.push(Language::Cobol) };
+            if lang & UdbLanguage_::Udb_language_CSharp as u16 != 0  { ret.push(Language::CSharp) };
+            if lang & UdbLanguage_::Udb_language_Fortran as u16 != 0 { ret.push(Language::Fortran) };
+            if lang & UdbLanguage_::Udb_language_Java as u16 != 0    { ret.push(Language::Java) };
+            if lang & UdbLanguage_::Udb_language_Jovial as u16 != 0  { ret.push(Language::Jovial) };
+            if lang & UdbLanguage_::Udb_language_Pascal as u16 != 0  { ret.push(Language::Pascal) };
+            if lang & UdbLanguage_::Udb_language_Plm as u16 != 0     { ret.push(Language::Plm) };
+            if lang & UdbLanguage_::Udb_language_Python as u16 != 0  { ret.push(Language::Python) };
+            if lang & UdbLanguage_::Udb_language_Verilog as u16 != 0 { ret.push(Language::Verilog) };
+            if lang & UdbLanguage_::Udb_language_Vhdl as u16 != 0    { ret.push(Language::Vhdl) };
+            if lang & UdbLanguage_::Udb_language_Web as u16 != 0     { ret.push(Language::Web) };
+            if ret.is_empty() {
+                None
+            } else {
+                Some(ret)
+            }
         }
     }
 
@@ -84,44 +115,6 @@ impl Db {
             38 => Status::UserAbort,
             39 => Status::WrongProduct,
             _ => panic!("Unexpected status"),
-        }
-    }
-
-    fn get_languages(language: UdbLanguage) -> Option<Vec<Lang>> {
-        let lang: u16 = language as u16;
-        let mut ret: Vec<Lang> = vec!();
-        if lang & UdbLanguage_::Udb_language_Ada as u16 != 0     { ret.push(Lang::Ada) };
-        if lang & UdbLanguage_::Udb_language_Asm as u16 != 0     { ret.push(Lang::Asm) };
-        if lang & UdbLanguage_::Udb_language_Basic as u16 != 0   { ret.push(Lang::Basic) };
-        if lang & UdbLanguage_::Udb_language_C as u16 != 0       { ret.push(Lang::C) };
-        if lang & UdbLanguage_::Udb_language_Cobol as u16 != 0   { ret.push(Lang::Cobol) };
-        if lang & UdbLanguage_::Udb_language_CSharp as u16 != 0  { ret.push(Lang::CSharp) };
-        if lang & UdbLanguage_::Udb_language_Fortran as u16 != 0 { ret.push(Lang::Fortran) };
-        if lang & UdbLanguage_::Udb_language_Java as u16 != 0    { ret.push(Lang::Java) };
-        if lang & UdbLanguage_::Udb_language_Jovial as u16 != 0  { ret.push(Lang::Jovial) };
-        if lang & UdbLanguage_::Udb_language_Pascal as u16 != 0  { ret.push(Lang::Pascal) };
-        if lang & UdbLanguage_::Udb_language_Plm as u16 != 0     { ret.push(Lang::Plm) };
-        if lang & UdbLanguage_::Udb_language_Python as u16 != 0  { ret.push(Lang::Python) };
-        if lang & UdbLanguage_::Udb_language_Verilog as u16 != 0 { ret.push(Lang::Verilog) };
-        if lang & UdbLanguage_::Udb_language_Vhdl as u16 != 0    { ret.push(Lang::Vhdl) };
-        if lang & UdbLanguage_::Udb_language_Web as u16 != 0     { ret.push(Lang::Web) };
-        if ret.is_empty() {
-            None
-        } else {
-            Some(ret)
-        }
-    }
-
-    fn get_entities() -> Option<Vec<Entity>> {
-        unsafe {
-            let mut udb_list_ents: *mut UdbEntity = mem::uninitialized();
-            let mut udb_count_ents: i32 = 0;
-
-            udbListEntity(&mut udb_list_ents, &mut udb_count_ents);
-            let list_ents: Option<Vec<Entity>> = Entity::from_raw_list_ents(udb_list_ents, udb_count_ents);
-            udbListEntityFree(udb_list_ents);
-
-            list_ents
         }
     }
 }
