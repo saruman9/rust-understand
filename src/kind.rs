@@ -1,62 +1,68 @@
 extern crate understand_sys;
 
-use std::ffi::CStr;
+use std::ffi::{CStr, CString};
 
 use language::Language;
 
 use understand_sys::{UdbKind, udbKindLongname, udbKindShortname, udbIsKindFile,
-udbKindLanguage};
+udbKindLanguage, udbIsKind, udbKindInverse};
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Kind {
-    pub name_long: String,
-    pub name_short: String,
-    pub is_file: bool,
-    pub language: Option<Language>,
+    pub raw: UdbKind,
 }
 
 impl Kind {
     pub fn from_raw_kind(kind: UdbKind) -> Self {
+        Kind {raw: kind }
+    }
+    /// Return the long name of kind as String.
+    pub fn get_name_long(&self) -> String {
+        unsafe{
+            CStr::from_ptr(udbKindLongname(self.raw)).to_string_lossy().into_owned()
+        }
+    }
+    /// Return the short name of kind as String.
+    pub fn get_name_short(&self) -> String {
+        unsafe{
+            CStr::from_ptr(udbKindShortname(self.raw)).to_string_lossy().into_owned()
+        }
+    }
+    /// Return the language of the kind.
+    pub fn get_language(&self) -> Option<Language> {
+        unsafe{
+            Language::from_raw_language(udbKindLanguage(self.raw))
+        }
+    }
+    pub fn is_file(&self) -> bool {
+        unsafe{
+            match udbIsKindFile(self.raw) {
+                0 => false,
+                _ => true,
+            }
+        }
+    }
+    pub fn is_kind(&self, text: &str) -> bool {
         unsafe {
-            let name_long: String = CStr::from_ptr(udbKindLongname(kind))
-                .to_string_lossy().into_owned();
-            let name_short: String = CStr::from_ptr(udbKindShortname(kind))
-                .to_string_lossy().into_owned();
-            let is_file: bool;
-            if udbIsKindFile(kind) != 0 {
-                is_file = true;
-            } else {
-                is_file = false;
+            let text: CString = CString::new(text).unwrap();
+            match udbIsKind(self.raw, text.as_ptr()) {
+                0 => false,
+                _ => true,
             }
-            let language: Option<Language> = Language::from_raw_language(udbKindLanguage(kind));
-
-            Kind {
-                name_long: name_long,
-                name_short: name_short,
-                is_file: is_file,
-                language: language,
-            }
+        }
+    }
+    /// Return the inverse of the reference kind.
+    pub fn inverse(&self) -> Self {
+        unsafe {
+            Kind::from_raw_kind(udbKindInverse(self.raw))
         }
     }
 }
 
 /*
-    // Return true if the kind matches the kind text.
-    pub fn udbIsKind(kind: UdbKind,
-                     text: *const c_char) -> c_int;
-
-    // Return true if the kind refers to a file entity.
-    pub fn udbIsKindFile(kind: UdbKind) -> c_int;
-
-    // Return the inverse of the reference kind.
-    pub fn udbKindInverse(kind: UdbKind) -> UdbKind;
-
     // Add a kind to the kindlist if not 0 or allocate a new kindlist.
     pub fn udbKindList(kind     : UdbKind,
                        kindlist : *mut UdbKindList);
-
-    // Return the language of the kind.
-    pub fn udbKindLanguage(kind: UdbKind) -> UdbLanguage;
 
     // Return an allocated copy of kindlist that must be freed with
     // udbKindListFree()
@@ -69,15 +75,10 @@ impl Kind {
     pub fn udbKindLocate(kind     : UdbKind,
                          kindlist : UdbKindList) -> c_int;
 
-    // Return the long name of kind as a temporary string.
-    pub fn udbKindLongname(kind: UdbKind) -> *const c_char;
-
     // Parse the kind text and return an allocated kindlist that must be freed
     // with udbKindListFree().
     pub fn udbKindParse(text: *const c_char) -> UdbKindList;
 
-    // Return the short name of kind as a temporary string.
-    pub fn udbKindShortname(kind: UdbKind) -> *const c_char;
 
     // Return allocated list of all entity kinds. Call udbListKindFree() to free
     // list.
