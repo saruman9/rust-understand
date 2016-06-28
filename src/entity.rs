@@ -8,46 +8,82 @@ use kind::Kind;
 use library::Library;
 use reference::Reference;
 
-use self::pbr::ProgressBar;
-
 use understand_sys::{UdbReference, UdbEntity, udbEntityId, udbEntityNameUnique,
 udbEntityNameLong, udbEntityNameSimple, udbEntityNameShort, udbEntityKind,
 udbEntityLanguage, udbEntityLibrary, udbEntityTypetext, udbEntityValue,
-udbEntityFreetext, udbListReference, udbListReferenceFree};
+udbEntityFreetext, udbListReference, udbListReferenceFree,
+udbEntityNameAbsolute, udbEntityNameRelative};
 
 
 #[derive(Clone)]
 pub struct Entity {
-    pub id            : i32,
     pub raw           : UdbEntity,
 }
 
 impl Entity {
+    pub fn from_raw_entity(entity: UdbEntity) -> Self {
+            Entity{ raw: entity }
+    }
+    pub fn from_raw_list_ents(udb_list_ents: *mut UdbEntity, udb_count_ents: i32) -> Option<Vec<Self>> {
+        let mut ret: Vec<Entity> = vec!();
+        unsafe {
+            for i in 0..udb_count_ents {
+                let entity: UdbEntity = *udb_list_ents.offset(i as isize);
+                ret.push(Entity::from_raw_entity(entity));
+            }
+        }
+        match ret.is_empty() {
+            false => Some(ret),
+            true  => None
+        }
+    }
+    /// Return the entity id. This is only valid until the db is changed.
+    pub fn get_id(&self) -> i32 {
+        unsafe {
+            udbEntityId(self.raw) as i32
+        }
+    }
+    /// Return the entity unique name as String.
     pub fn get_name_unique(&self) -> String {
         unsafe {
             CStr::from_ptr(udbEntityNameUnique(self.raw)).to_string_lossy().into_owned()
         }
     }
+    /// Return the entity long name as String. If there is no long name the short name is returned.
     pub fn get_name_long(&self) -> String {
         unsafe {
             CStr::from_ptr(udbEntityNameLong(self.raw)).to_string_lossy().into_owned()
         }
     }
+    /// Return the entity simple name as String.
     pub fn get_name_simple(&self) -> String {
         unsafe {
             CStr::from_ptr(udbEntityNameSimple(self.raw)).to_string_lossy().into_owned()
         }
     }
+    /// Return the entity short name as String.
     pub fn get_name_short(&self) -> String {
         unsafe {
             CStr::from_ptr(udbEntityNameShort(self.raw)).to_string_lossy().into_owned()
         }
     }
+    /// Return the absolute name for file entity as String. May be error - segmentation fault.
+    pub unsafe fn get_name_absolute(&self) -> String {
+            CStr::from_ptr(udbEntityNameAbsolute(self.raw)).to_string_lossy().into_owned()
+    }
+    /// Return the relative name for file entity as String.
+    pub fn get_name_relative(&self) -> String {
+        unsafe {
+            CStr::from_ptr(udbEntityNameRelative(self.raw)).to_string_lossy().into_owned()
+        }
+    }
+    /// Return the entity language.
     pub fn get_language(&self) -> Option<Language> {
         unsafe {
             Language::from_raw_language(udbEntityLanguage(self.raw))
         }
     }
+    /// Return the entity library.
     pub fn get_library(&self) -> Option<Library> {
         unsafe {
             Library::from_raw_library(udbEntityLibrary(self.raw))
@@ -102,34 +138,10 @@ impl Entity {
         */
         }
     }
+    /// Return the entity kind.
     pub fn get_kind(&self) -> Kind {
         unsafe {
             Kind::from_raw_kind(udbEntityKind(self.raw))
-        }
-    }
-    pub fn from_raw_entity(entity: UdbEntity) -> Self {
-        unsafe {
-            Entity{
-                id  : udbEntityId(entity) as i32,
-                raw : entity,
-            }
-        }
-    }
-
-    pub fn from_raw_list_ents(udb_list_ents: *mut UdbEntity, udb_count_ents: i32) -> Option<Vec<Self>> {
-        let mut ret: Vec<Entity> = vec!();
-        //let mut pb = ProgressBar::new(udb_count_ents as u64);
-        //pb.message("Create entities: ");
-        unsafe {
-            for i in 0..udb_count_ents {
-                //pb.inc();
-                let entity: UdbEntity = *udb_list_ents.offset(i as isize);
-                ret.push(Entity::from_raw_entity(entity));
-            }
-        }
-        match ret.is_empty() {
-            false => Some(ret),
-            true  => None
         }
     }
 }
