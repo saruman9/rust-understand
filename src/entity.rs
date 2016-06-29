@@ -16,7 +16,7 @@ udbEntityFreetext, udbListReference, udbEntityNameAbsolute,
 udbEntityNameRelative, udbEntityRefs, udbListReferenceFree};
 
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Entity {
     pub raw: UdbEntity,
 }
