@@ -13,10 +13,10 @@ udbInfoBuild, UdbStatus, UdbLanguage_, udbDbClose, udbListEntity,
 udbListEntityFree};
 
 pub struct Db {
-    pub name      : String,
-    pub path      : PathBuf,
-    pub version   : String,
-    pub status    : Status,
+    pub name: String,
+    pub path: PathBuf,
+    pub version: String,
+    pub status: Status,
 }
 
 impl Db {
@@ -25,10 +25,10 @@ impl Db {
             let udb_status = udbDbOpen(CString::new(path).unwrap().as_ptr());
 
             Db {
-                name      : CStr::from_ptr(udbDbName()).to_string_lossy().into_owned(),
-                path      : PathBuf::from(path),
-                version   : CStr::from_ptr(udbInfoBuild()).to_string_lossy().into_owned(),
-                status    : Db::get_status(udb_status),
+                name: CStr::from_ptr(udbDbName()).to_string_lossy().into_owned(),
+                path: PathBuf::from(path),
+                version: CStr::from_ptr(udbInfoBuild()).to_string_lossy().into_owned(),
+                status: Db::get_status(udb_status),
             }
         }
     }
@@ -43,6 +43,21 @@ impl Db {
             udbListEntityFree(udb_list_ents);
 
             list_ents
+        }
+    }
+    /// Return a list of entities that match the specified name and kind.
+    /// Empty strings for omit search pattern.
+    pub fn lookup(&self, needle: &str, kind: &str) -> Option<Vec<Entity>> {
+        let mut ents: Vec<Entity> = self.get_entities().unwrap();
+        ents = ents.into_iter()
+            .filter(|ent|
+                    ent.get_name_long().find(needle).is_some())
+            .filter(|ent|
+            ent.get_kind().get_name_short().find(kind).is_some())
+            .collect::<Vec<Entity>>();
+        match ents.is_empty() {
+            true => None,
+            false => Some(ents),
         }
     }
     pub fn get_languages(&self) -> Option<Vec<Language>> {
