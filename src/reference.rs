@@ -3,7 +3,7 @@ extern crate understand_sys;
 use std::fmt;
 
 use understand_sys::{UdbReference, udbReferenceLine, udbReferenceColumn,
-udbReferenceEntity, udbEntityId, udbReferenceKind};
+udbReferenceEntity, udbReferenceKind, udbReferenceScope};
 
 use kind::Kind;
 use entity::Entity;
@@ -39,13 +39,32 @@ impl Reference {
     pub fn get_kind(&self) -> Kind {
         unsafe{ Kind::from_raw_kind(udbReferenceKind(self.raw)) }
     }
-    //pub fn get_entity(&self) -> Enti
-    //let entity_id: i32 = udbEntityId(udbReferenceEntity(reference));
+    pub fn get_entity(&self) -> Entity {
+        unsafe {
+            println!("TEST: {:?}", Entity::from_raw_entity(udbReferenceEntity(self.raw)).get_name_short());
+        }
+        unsafe { Entity::from_raw_entity(udbReferenceEntity(self.raw)) }
+    }
+    /// Return reference scope.
+    pub fn get_scope(&self) -> Entity {
+        unsafe { Entity::from_raw_entity(udbReferenceScope(self.raw)) }
+    }
 }
 
 impl fmt::Display for Reference {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}:{}:{}", self.get_kind().get_name_long(), self.get_line(), self.get_column())
+        write!(f, "{scope:?} ({line}) {kind}
+    kind->longname: {kind}
+    ent->name: {ent:?}
+    scope->name: {scope:?}
+    file->longname: ...
+    line: {line}
+    column: {column}",
+               ent=self.get_entity().get_name_short(),
+               line=self.get_line(),
+               column=self.get_column(),
+               scope=self.get_scope().raw,
+               kind=self.get_kind().get_name_short())
     }
 }
 
