@@ -2,6 +2,7 @@ extern crate understand_sys;
 
 use std::ffi::{CStr, CString};
 use std::mem;
+use std::fmt;
 
 use language::Language;
 use kind::Kind;
@@ -11,13 +12,13 @@ use reference::Reference;
 use understand_sys::{UdbReference, UdbEntity, udbEntityId, udbEntityNameUnique,
 udbEntityNameLong, udbEntityNameSimple, udbEntityNameShort, udbEntityKind,
 udbEntityLanguage, udbEntityLibrary, udbEntityTypetext, udbEntityValue,
-udbEntityFreetext, udbListReference, udbListReferenceFree,
-udbEntityNameAbsolute, udbEntityNameRelative};
+udbEntityFreetext, udbListReference, udbEntityNameAbsolute,
+udbEntityNameRelative, udbEntityRefs, udbListReferenceFree};
 
 
 #[derive(Clone)]
 pub struct Entity {
-    pub raw           : UdbEntity,
+    pub raw: UdbEntity,
 }
 
 impl Entity {
@@ -118,30 +119,57 @@ impl Entity {
             }
         }
     }
+    /// Return a vec of all references for entity.
     pub fn get_references(&self) -> Option<Vec<Reference>> {
+        let list_refs: Option<Vec<Reference>>;
         unsafe {
             let mut udb_list_refs: *mut UdbReference = mem::uninitialized();
             let mut udb_count_refs: i32 = 0;
 
             udbListReference(self.raw, &mut udb_list_refs, &mut udb_count_refs);
-            let list_refs: Option<Vec<Reference>> = Reference::from_raw_list_refs(udb_list_refs, udb_count_refs);
+            list_refs = Reference::from_raw_list_refs(udb_list_refs, udb_count_refs);
             udbListReferenceFree(udb_list_refs);
 
             list_refs
-
-        /*
-                pub fn udbListReference(entity : UdbEntity,
-                                        refs   : *mut *mut UdbReference,
-                                        items  : *mut c_int);
-
-                pub fn udbListReferenceFree(refs: *mut UdbReference);
-        */
         }
+    }
+    /// Return a vec of references, using the refkinds and/or
+    /// the entkinds specified.
+    pub fn get_references_with_filter(&self,
+                                      refkinds: &str,
+                                      entkinds: &str,
+                                      unique: i32) -> Option<Vec<Reference>> {
+        let list_refs: Option<Vec<Reference>>;
+
+        unsafe {
+            let mut udb_list_refs: *mut UdbReference = mem::uninitialized();
+
+            let refkinds_raw = CString::new(refkinds).unwrap().as_ptr();
+            let entkinds_raw = CString::new(entkinds).unwrap().as_ptr();
+
+            let udb_count_refs: i32 = udbEntityRefs(self.raw,
+                                                    refkinds_raw,
+                                                    entkinds_raw,
+                                                    unique,
+                                                    &mut udb_list_refs);
+            list_refs = Reference::from_raw_list_refs(udb_list_refs, udb_count_refs);
+            udbListReferenceFree(udb_list_refs);
+        }
+        list_refs
     }
     /// Return the entity kind.
     pub fn get_kind(&self) -> Kind {
         unsafe {
             Kind::from_raw_kind(udbEntityKind(self.raw))
         }
+    }
+}
+
+impl fmt::Display for Entity {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}\n\t{} - {}",
+               self.get_name_long(),
+               self.get_language().unwrap_or(Language::NONE),
+               self.get_kind().get_name_short())
     }
 }
