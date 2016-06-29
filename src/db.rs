@@ -10,7 +10,7 @@ use entity::Entity;
 
 use understand_sys::{UdbEntity, udbDbOpen, udbDbLanguage, udbDbName,
 udbInfoBuild, UdbStatus, UdbLanguage_, udbDbClose, udbListEntity,
-udbListEntityFree};
+udbListEntityFree, udbLookupEntityByUniquename};
 
 pub struct Db {
     pub name: String,
@@ -58,6 +58,14 @@ impl Db {
         match ents.is_empty() {
             true => None,
             false => Some(ents),
+        }
+    }
+    /// Lookup an entity by unique name.
+    pub fn lookup_by_name_unique(needle: &str) -> Entity {
+        unsafe {
+            Entity::from_raw_entity(
+                udbLookupEntityByUniquename(CString::new(needle).unwrap().as_ptr())
+            )
         }
     }
     pub fn get_languages(&self) -> Option<Vec<Language>> {
