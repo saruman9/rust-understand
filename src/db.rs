@@ -13,24 +13,25 @@ udbInfoBuild, UdbStatus, UdbLanguage_, udbDbClose, udbListEntity,
 udbListEntityFree, udbLookupEntityByUniquename};
 
 pub struct Db {
-    pub name: String,
     pub path: PathBuf,
-    pub version: String,
-    pub status: Status,
 }
 
 impl Db {
-    pub fn open(path: &str) -> Self {
+    pub fn open(path: &str) -> Result<Self, Status> {
         unsafe {
-            let udb_status = udbDbOpen(CString::new(path).unwrap().as_ptr());
+            let udb_status: Status = Db::get_status(udbDbOpen(CString::new(path).unwrap().as_ptr()));
 
-            Db {
-                name: CStr::from_ptr(udbDbName()).to_string_lossy().into_owned(),
-                path: PathBuf::from(path),
-                version: CStr::from_ptr(udbInfoBuild()).to_string_lossy().into_owned(),
-                status: Db::get_status(udb_status),
+            match udb_status {
+                Status::Okay => Ok(Db { path: PathBuf::from(path) }),
+                _ => Err(udb_status),
             }
         }
+    }
+    pub fn get_name(&self) -> String {
+        unsafe{ CStr::from_ptr(udbDbName()).to_string_lossy().into_owned() }
+    }
+    pub fn get_version(&self) -> String {
+        unsafe{ CStr::from_ptr(udbInfoBuild()).to_string_lossy().into_owned() }
     }
     pub fn get_entities(&self) -> Option<Vec<Entity>> {
         unsafe {
