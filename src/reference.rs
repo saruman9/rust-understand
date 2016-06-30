@@ -2,8 +2,8 @@ extern crate understand_sys;
 
 use std::fmt;
 
-use understand_sys::{UdbReference, udbReferenceLine, udbReferenceColumn,
-udbReferenceEntity, udbReferenceKind, udbReferenceScope};
+use understand_sys::{UdbReference, udbReferenceLine, udbReferenceColumn, udbReferenceEntity,
+udbReferenceKind, udbReferenceScope, udbListReferenceFree};
 
 use kind::Kind;
 use entity::Entity;
@@ -13,11 +13,17 @@ pub struct Reference {
     pub raw: UdbReference,
 }
 
+pub struct ListReference {
+    pub raw: *mut UdbReference,
+    pub list: Vec<Reference>,
+}
+
 impl Reference {
     pub fn from_raw_reference(reference: UdbReference) -> Self {
         Reference { raw: reference }
     }
-    pub fn from_raw_list_refs(udb_list_refs: *mut UdbReference, udb_count_refs: i32) -> Option<Vec<Self>> {
+    pub fn from_raw_list_refs(udb_list_refs: *mut UdbReference, udb_count_refs: i32)
+                              -> Option<ListReference> {
         let mut ret: Vec<Reference> = vec!();
         unsafe {
             for i in 0..udb_count_refs {
@@ -26,8 +32,11 @@ impl Reference {
             }
         }
         match ret.is_empty() {
-            false => Some(ret),
-            true  => None,
+            false => Some(ListReference {
+                raw: udb_list_refs,
+                list: ret,
+            }),
+            true => None,
         }
     }
     pub fn get_line(&self) -> i32 {
@@ -40,9 +49,6 @@ impl Reference {
         unsafe{ Kind::from_raw_kind(udbReferenceKind(self.raw)) }
     }
     pub fn get_entity(&self) -> Entity {
-        unsafe {
-            println!("TEST: {:?}", Entity::from_raw_entity(udbReferenceEntity(self.raw)).get_name_short());
-        }
         unsafe { Entity::from_raw_entity(udbReferenceEntity(self.raw)) }
     }
     /// Return reference scope.
@@ -65,6 +71,12 @@ impl fmt::Display for Reference {
                column=self.get_column(),
                scope=self.get_scope().raw,
                kind=self.get_kind().get_name_short())
+    }
+}
+
+impl Drop for ListReference {
+    fn drop(&mut self) {
+        unsafe { udbListReferenceFree(self.raw) };
     }
 }
 

@@ -8,6 +8,7 @@ use language::Language;
 use kind::Kind;
 use library::Library;
 use reference::Reference;
+use reference::ListReference;
 
 use understand_sys::{UdbReference, UdbEntity, udbEntityId, udbEntityNameUnique,
 udbEntityNameLong, udbEntityNameSimple, udbEntityNameShort, udbEntityKind,
@@ -120,15 +121,14 @@ impl Entity {
         }
     }
     /// Return a vec of all references for entity.
-    pub fn get_references(&self) -> Option<Vec<Reference>> {
-        let list_refs: Option<Vec<Reference>>;
+    pub fn get_references(&self) -> Option<ListReference> {
+        let list_refs: Option<ListReference>;
         unsafe {
             let mut udb_list_refs: *mut UdbReference = mem::uninitialized();
             let mut udb_count_refs: i32 = 0;
 
             udbListReference(self.raw, &mut udb_list_refs, &mut udb_count_refs);
             list_refs = Reference::from_raw_list_refs(udb_list_refs, udb_count_refs);
-            udbListReferenceFree(udb_list_refs);
 
             list_refs
         }
@@ -138,8 +138,8 @@ impl Entity {
     pub fn get_references_with_filter(&self,
                                       refkinds: &str,
                                       entkinds: &str,
-                                      unique: i32) -> Option<Vec<Reference>> {
-        let list_refs: Option<Vec<Reference>>;
+                                      unique: i32) -> Option<ListReference> {
+        let list_refs: Option<ListReference>;
 
         unsafe {
             let mut udb_list_refs: *mut UdbReference = mem::uninitialized();
