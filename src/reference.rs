@@ -3,7 +3,7 @@ extern crate understand_sys;
 use std::fmt;
 
 use understand_sys::{UdbReference, udbReferenceLine, udbReferenceColumn, udbReferenceEntity,
-udbReferenceKind, udbReferenceScope, udbListReferenceFree};
+udbReferenceKind, udbReferenceScope, udbListReferenceFree, udbReferenceFile};
 
 use kind::Kind;
 use entity::Entity;
@@ -48,6 +48,7 @@ impl Reference {
     pub fn get_kind(&self) -> Kind {
         unsafe{ Kind::from_raw_kind(udbReferenceKind(self.raw)) }
     }
+    /// Return reference entity.
     pub fn get_entity(&self) -> Entity {
         unsafe { Entity::from_raw_entity(udbReferenceEntity(self.raw)) }
     }
@@ -55,22 +56,27 @@ impl Reference {
     pub fn get_scope(&self) -> Entity {
         unsafe { Entity::from_raw_entity(udbReferenceScope(self.raw)) }
     }
+    /// Return reference file.
+    pub fn get_file(&self) -> Entity {
+        unsafe { Entity::from_raw_entity(udbReferenceFile(self.raw)) }
+    }
 }
 
 impl fmt::Display for Reference {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{scope:?} ({line}) {kind}
+        write!(f, "{scope} ({line}) {kind}
     kind->longname: {kind}
-    ent->name: {ent:?}
-    scope->name: {scope:?}
-    file->longname: ...
+    ent->name: {ent}
+    scope->name: {scope}
+    file->longname: {file}
     line: {line}
     column: {column}",
-               ent=self.get_entity().get_name_short(),
-               line=self.get_line(),
-               column=self.get_column(),
-               scope=self.get_scope().raw,
-               kind=self.get_kind().get_name_short())
+                ent=self.get_entity().get_name_short(),
+                line=self.get_line(),
+                column=self.get_column(),
+                scope=self.get_scope().get_name_short(),
+                kind=self.get_kind().get_name_short(),
+                file=self.get_file().get_name_long())
     }
 }
 
@@ -81,19 +87,21 @@ impl Drop for ListReference {
 }
 
 /*
-
     // Return an allocated copy of reference.
     pub fn udbReferenceCopy(reference: UdbReference) -> UdbReference;
 
     // Free reference copied by udbReferenceCopy().
     pub fn udbReferenceCopyFree(reference: UdbReference);
 
-    // Return reference entity.
-    pub fn udbReferenceEntity(reference: UdbReference) -> UdbEntity;
-
-    // Return reference file.
-    pub fn udbReferenceFile(reference: UdbReference) -> UdbEntity;
-
-    // Return reference scope.
-    pub fn udbReferenceScope(reference: UdbReference) -> UdbEntity;
+    // Filter the specified list of references, using the refkinds and/or the
+    // entkinds specified, and return a new allocated array. If unique is
+    // specified, the newrefs array will only contain the first reference for
+    // each unique entity. Refkinds and Entkinds must both be allocated and
+    // will be freed by this call.
+    pub fn udbListReferenceFilter(refs     : *mut UdbReference,
+                                  refkinds : UdbKindList,
+                                  entkinds : UdbKindList,
+                                  unique   : c_int,
+                                  refs     : *mut *mut UdbReference,
+                                  num      : *mut c_int);
 */
