@@ -7,14 +7,12 @@ use std::fmt;
 use language::Language;
 use kind::Kind;
 use library::Library;
-use reference::Reference;
-use reference::ListReference;
+use reference::{Reference, ListReference};
 
-use understand_sys::{UdbReference, UdbEntity, udbEntityId, udbEntityNameUnique,
-udbEntityNameLong, udbEntityNameSimple, udbEntityNameShort, udbEntityKind,
-udbEntityLanguage, udbEntityLibrary, udbEntityTypetext, udbEntityValue,
-udbEntityFreetext, udbListReference, udbEntityNameAbsolute,
-udbEntityNameRelative, udbEntityRefs, udbListReferenceFree};
+use understand_sys::{UdbReference, UdbEntity, udbListEntityFree, udbEntityId, udbEntityNameUnique,
+udbEntityNameLong, udbEntityNameSimple, udbEntityNameShort, udbEntityKind, udbEntityLanguage,
+udbEntityLibrary, udbEntityTypetext, udbEntityValue, udbEntityFreetext, udbListReference,
+udbEntityNameAbsolute, udbEntityNameRelative, udbEntityRefs, udbListReferenceFree};
 
 
 #[derive(Clone, Debug)]
@@ -22,11 +20,18 @@ pub struct Entity {
     pub raw: UdbEntity,
 }
 
+pub struct ListEntity {
+    pub raw: *mut UdbEntity,
+    pub list: Vec<Entity>,
+    pub old: bool,
+}
+
 impl Entity {
     pub fn from_raw_entity(entity: UdbEntity) -> Self {
             Entity{ raw: entity }
     }
-    pub fn from_raw_list_ents(udb_list_ents: *mut UdbEntity, udb_count_ents: i32) -> Option<Vec<Self>> {
+    pub fn from_raw_list_ents(udb_list_ents: *mut UdbEntity, udb_count_ents: i32)
+                              -> Option<ListEntity> {
         let mut ret: Vec<Entity> = vec!();
         unsafe {
             for i in 0..udb_count_ents {
@@ -35,8 +40,12 @@ impl Entity {
             }
         }
         match ret.is_empty() {
-            false => Some(ret),
-            true  => None
+            false => Some(ListEntity {
+                raw: udb_list_ents,
+                list: ret,
+                old: false,
+            }),
+            true => None,
         }
     }
     /// Return the entity id. This is only valid until the db is changed.
@@ -171,5 +180,11 @@ impl fmt::Display for Entity {
                self.get_name_long(),
                self.get_language().unwrap_or(Language::NONE),
                self.get_kind().get_name_short())
+    }
+}
+
+impl Drop for ListEntity {
+    fn drop(&mut self) {
+        unsafe { udbListEntityFree(self.raw) };
     }
 }

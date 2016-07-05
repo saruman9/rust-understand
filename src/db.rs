@@ -6,11 +6,10 @@ use std::mem;
 
 use language::Language;
 use status::Status;
-use entity::Entity;
+use entity::{Entity, ListEntity};
 
-use understand_sys::{UdbEntity, udbDbOpen, udbDbLanguage, udbDbName,
-udbInfoBuild, UdbStatus, UdbLanguage_, udbDbClose, udbListEntity,
-udbListEntityFree, udbLookupEntityByUniquename};
+use understand_sys::{UdbEntity, udbDbOpen, udbDbLanguage, udbDbName, udbInfoBuild, UdbStatus,
+UdbLanguage_, udbDbClose, udbListEntity, udbLookupEntityByUniquename};
 
 pub struct Db {
     pub path: PathBuf,
@@ -33,30 +32,31 @@ impl Db {
     pub fn get_version(&self) -> String {
         unsafe{ CStr::from_ptr(udbInfoBuild()).to_string_lossy().into_owned() }
     }
-    pub fn get_entities(&self) -> Option<Vec<Entity>> {
+    pub fn get_entities(&self) -> Option<ListEntity> {
         unsafe {
             let mut udb_list_ents: *mut UdbEntity = mem::uninitialized();
             let mut udb_count_ents: i32 = 0;
 
             udbListEntity(&mut udb_list_ents, &mut udb_count_ents);
-            let list_ents: Option<Vec<Entity>> = Entity::from_raw_list_ents(udb_list_ents, udb_count_ents);
-            // TODO dangling pointers?
-            udbListEntityFree(udb_list_ents);
+            let list_ents: Option<ListEntity> = Entity::from_raw_list_ents(udb_list_ents,
+                                                                           udb_count_ents);
 
             list_ents
         }
     }
     /// Return a list of entities that match the specified name and kind.
     /// Empty strings for omit search pattern.
-    pub fn lookup(&self, needle: &str, kind: &str) -> Option<Vec<Entity>> {
-        let mut ents: Vec<Entity> = self.get_entities().unwrap();
-        ents = ents.into_iter()
+    pub fn lookup(&self, needle: &str, kind: &str) -> Option<ListEntity> {
+        let mut ents: ListEntity = self.get_entities().unwrap();
+        let ents_new = ents.list.clone().into_iter()
             .filter(|ent|
                     ent.get_name_long().find(needle).is_some())
             .filter(|ent|
-            ent.get_kind().get_name_short().find(kind).is_some())
+                    ent.get_kind().get_name_short().find(kind).is_some())
             .collect::<Vec<Entity>>();
-        match ents.is_empty() {
+        mem::replace(&mut ents.list, ents_new);
+        ents.old = true;
+        match ents.list.is_empty() {
             true => None,
             false => Some(ents),
         }
