@@ -162,7 +162,6 @@ impl Entity {
                                                     unique,
                                                     &mut udb_list_refs);
             list_refs = Reference::from_raw_list_refs(udb_list_refs, udb_count_refs);
-            udbListReferenceFree(udb_list_refs);
         }
         list_refs
     }
