@@ -9,7 +9,7 @@ use status::Status;
 use entity::{Entity, ListEntity};
 
 use understand_sys::{UdbEntity, udbDbOpen, udbDbLanguage, udbDbName, udbInfoBuild, UdbStatus,
-UdbLanguage_, udbDbClose, udbListEntity, udbLookupEntityByUniquename};
+UdbLanguage_, udbDbClose, udbListEntity, udbLookupEntityByUniquename, udbListFile, udbLookupEntity};
 
 pub struct Db {
     pub path: PathBuf,
@@ -38,28 +38,61 @@ impl Db {
             let mut udb_count_ents: i32 = 0;
 
             udbListEntity(&mut udb_list_ents, &mut udb_count_ents);
-            let list_ents: Option<ListEntity> = Entity::from_raw_list_ents(udb_list_ents,
-                                                                           udb_count_ents);
-
-            list_ents
+            Entity::from_raw_list_ents(udb_list_ents, udb_count_ents)
         }
+    }
+    /// Lookup and return an allocated list of entities by name and kind, if specified.
+    /// !SLOWER! then lookup on Rust
+    pub fn lookup_entity(&self, name: &str, kind: &str, search_in_shortname: bool)
+                         -> Option<ListEntity>{
+        unsafe {
+            let mut udb_list_ents: *mut UdbEntity = mem::uninitialized();
+            let mut udb_count_ents: i32 = 0;
+
+            let search_in_shortname_int = if search_in_shortname { 1 } else { 0 } ;
+            udbLookupEntity(CString::new(name).unwrap().as_ptr(),
+                            CString::new(kind).unwrap().as_ptr(),
+                            search_in_shortname_int,
+                            &mut udb_list_ents,
+                            &mut udb_count_ents);
+            Entity::from_raw_list_ents(udb_list_ents, udb_count_ents)
+        }
+    }
+    /// Return a temporary list of all analyzed file entities.
+    pub fn get_files(&self) -> Option<ListEntity> {
+        unsafe {
+            let mut udb_list_files: *mut UdbEntity = mem::uninitialized();
+            let mut udb_count_files: i32 = 0;
+
+            udbListFile(&mut udb_list_files, &mut udb_count_files);
+            Entity::from_raw_list_ents(udb_list_files, udb_count_files)
+        }
+    }
+    pub fn lookup_file(&self, needle: &str) -> Option<ListEntity> {
+        let files: Option<ListEntity> = self.get_files();
+        files.map(|mut files| {
+            files.list = files.list.clone().into_iter()
+                .filter(|file|
+                        file.get_name_long().find(needle).is_some())
+                .collect();
+            files.old = true;
+            files
+        })
     }
     /// Return a list of entities that match the specified name and kind.
     /// Empty strings for omit search pattern.
     pub fn lookup(&self, needle: &str, kind: &str) -> Option<ListEntity> {
-        let mut ents: ListEntity = self.get_entities().unwrap();
-        let ents_new = ents.list.clone().into_iter()
-            .filter(|ent|
-                    ent.get_name_long().find(needle).is_some())
-            .filter(|ent|
-                    ent.get_kind().get_name_short().find(kind).is_some())
-            .collect::<Vec<Entity>>();
-        mem::replace(&mut ents.list, ents_new);
-        ents.old = true;
-        match ents.list.is_empty() {
-            true => None,
-            false => Some(ents),
-        }
+        let ents: Option<ListEntity> = self.get_entities();
+        ents.map(|mut ents| {
+            ents.list = ents.list.clone().into_iter()
+                .filter(|ent|
+                        ent.get_name_long().find(needle).is_some())
+                .filter(|ent|
+                        ent.get_kind().get_name_short().find(kind).is_some())
+                .collect();
+            ents.old = true;
+            ents
+        })
     }
     /// Lookup an entity by unique name.
     pub fn lookup_by_name_unique(needle: &str) -> Entity {
