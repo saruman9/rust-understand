@@ -12,7 +12,7 @@ use reference::{Reference, ListReference};
 use understand_sys::{UdbReference, UdbEntity, udbListEntityFree, udbEntityId, udbEntityNameUnique,
 udbEntityNameLong, udbEntityNameSimple, udbEntityNameShort, udbEntityKind, udbEntityLanguage,
 udbEntityLibrary, udbEntityTypetext, udbEntityValue, udbEntityFreetext, udbListReference,
-udbEntityNameAbsolute, udbEntityNameRelative, udbEntityRefs};
+udbEntityNameAbsolute, udbEntityNameRelative, udbEntityRefs, udbListReferenceFile};
 
 
 #[derive(Clone, Debug)]
@@ -100,24 +100,31 @@ impl Entity {
             Library::from_raw_library(udbEntityLibrary(self.raw))
         }
     }
+
+    /// Return a string of the value associated with certain entities such as enumerators,
+    /// initialized variables, default parameter values in function definitions and macros.
     pub fn get_value(&self) -> Option<String> {
         unsafe {
-            let value_raw: String = CStr::from_ptr(udbEntityValue(self.raw)).to_string_lossy().into_owned();
+            let value_raw: String = CStr::from_ptr(udbEntityValue(self.raw))
+                .to_string_lossy().into_owned();
             match value_raw.is_empty() {
                 false => Some(value_raw),
                 true  => None,
             }
         }
     }
+    /// Return the entity typetext as a string.
     pub fn get_typetext(&self) -> Option<String> {
         unsafe {
-            let typetext_raw: String = CStr::from_ptr(udbEntityTypetext(self.raw)).to_string_lossy().into_owned();
+            let typetext_raw: String = CStr::from_ptr(udbEntityTypetext(self.raw))
+                .to_string_lossy().into_owned();
             match typetext_raw.is_empty() {
                 false => Some(typetext_raw),
                 true  => None,
             }
         }
     }
+    /// Return debug information about CGraph(ControlFlow Graph)
     pub fn get_cgraph(&self) -> Option<String> {
         unsafe {
             let cgraph_text_raw = CString::new("CGraph").unwrap().as_ptr();
@@ -142,8 +149,18 @@ impl Entity {
             list_refs
         }
     }
-    /// Return a vec of references, using the refkinds and/or
-    /// the entkinds specified.
+    /// Return an allocated list of all references within file.
+    pub fn get_references_file(&self) -> Option<ListReference> {
+        unsafe {
+            let mut udb_list_refs: *mut UdbReference = mem::uninitialized();
+            let mut udb_count_refs: i32 = 0;
+
+            udbListReferenceFile(self.raw, &mut udb_list_refs, &mut udb_count_refs);
+
+            Reference::from_raw_list_refs(udb_list_refs, udb_count_refs)
+        }
+    }
+    /// Return a vec of references, using the refkinds and/or the entkinds specified.
     pub fn get_references_with_filter(&self,
                                       refkinds: &str,
                                       entkinds: &str,
