@@ -34,6 +34,7 @@ impl Kind {
             Language::from_raw_language(udbKindLanguage(self.raw))
         }
     }
+    /// Return true if the kind refers to a file entity.
     pub fn is_file(&self) -> bool {
         unsafe{
             match udbIsKindFile(self.raw) {
@@ -42,6 +43,7 @@ impl Kind {
             }
         }
     }
+    /// Return true if the kind matches the kind text.
     pub fn is_kind(&self, text: &str) -> bool {
         unsafe {
             let text: CString = CString::new(text).unwrap();
