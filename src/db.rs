@@ -5,7 +5,7 @@ use std::ffi::{CString, CStr};
 use std::mem;
 
 use language::Language;
-use status::Status;
+use errors::StatusError;
 use entity::{Entity, ListEntity};
 
 use understand_sys::{UdbEntity, udbDbOpen, udbDbLanguage, udbDbName, udbInfoBuild, UdbStatus,
@@ -16,12 +16,13 @@ pub struct Db {
 }
 
 impl Db {
-    pub fn open(path: &str) -> Result<Self, Status> {
+    pub fn open(path: &str) -> Result<Self, StatusError> {
         unsafe {
-            let udb_status: Status = Db::get_status(udbDbOpen(CString::new(path).unwrap().as_ptr()));
+            let udb_status: StatusError = Db::get_status(udbDbOpen(
+                CString::new(path).unwrap().as_ptr()));
 
             match udb_status {
-                Status::Okay => Ok(Db { path: PathBuf::from(path) }),
+                StatusError::Okay => Ok(Db { path: PathBuf::from(path) }),
                 _ => Err(udb_status),
             }
         }
@@ -129,48 +130,48 @@ impl Db {
         }
     }
 
-    fn get_status(udb_status: UdbStatus) -> Status {
+    fn get_status(udb_status: UdbStatus) -> StatusError {
         match udb_status as u8 {
-            0  => Status::Okay,
-            1  => Status::DBAlreadyOpen,
-            2  => Status::DBBusy,
-            3  => Status::DBChanged,
-            4  => Status::DBCorrupt,
-            5  => Status::DBOldVersion,
-            6  => Status::DBUnknownVersion,
-            7  => Status::DBUnableCreate,
-            8  => Status::DBUnableDelete,
-            9  => Status::DBUnableModify,
-            10 => Status::DBUnableOpen,
-            11 => Status::DBUnableWrite,
-            12 => Status::DemoAnotherDBOpen,
-            13 => Status::DemoInvalid,
-            14 => Status::DrawNoFont,
-            15 => Status::DrawNoImage,
-            16 => Status::DrawTooBig,
-            17 => Status::DrawUnableCreateFile,
-            18 => Status::DrawUnsupportedFile,
-            19 => Status::LexerFileModified,
-            20 => Status::LexerFileUnreadable,
-            21 => Status::LexerUnsupportedLanguage,
-            22 => Status::NoApiLicense,
-            23 => Status::NoApiLicenseAda,
-            24 => Status::NoApiLicenseC,
-            25 => Status::NoApiLicenseCobol,
-            26 => Status::NoApiLicenseFtn,
-            27 => Status::NoApiLicenseJava,
-            28 => Status::NoApiLicenseJovial,
-            29 => Status::NoApiLicensePascal,
-            30 => Status::NoApiLicensePlm,
-            31 => Status::NoApiLicensePython,
-            32 => Status::NoApiLicenseWeb,
-            33 => Status::NoApiLicenseVhdl,
-            34 => Status::NoApiLicenseVerilog,
-            35 => Status::ReportUnableCreate,
-            36 => Status::ReportUnableDelete,
-            37 => Status::ReportUnableWrite,
-            38 => Status::UserAbort,
-            39 => Status::WrongProduct,
+            0  => StatusError::Okay,
+            1  => StatusError::DBAlreadyOpen,
+            2  => StatusError::DBBusy,
+            3  => StatusError::DBChanged,
+            4  => StatusError::DBCorrupt,
+            5  => StatusError::DBOldVersion,
+            6  => StatusError::DBUnknownVersion,
+            7  => StatusError::DBUnableCreate,
+            8  => StatusError::DBUnableDelete,
+            9  => StatusError::DBUnableModify,
+            10 => StatusError::DBUnableOpen,
+            11 => StatusError::DBUnableWrite,
+            12 => StatusError::DemoAnotherDBOpen,
+            13 => StatusError::DemoInvalid,
+            14 => StatusError::DrawNoFont,
+            15 => StatusError::DrawNoImage,
+            16 => StatusError::DrawTooBig,
+            17 => StatusError::DrawUnableCreateFile,
+            18 => StatusError::DrawUnsupportedFile,
+            19 => StatusError::LexerFileModified,
+            20 => StatusError::LexerFileUnreadable,
+            21 => StatusError::LexerUnsupportedLanguage,
+            22 => StatusError::NoApiLicense,
+            23 => StatusError::NoApiLicenseAda,
+            24 => StatusError::NoApiLicenseC,
+            25 => StatusError::NoApiLicenseCobol,
+            26 => StatusError::NoApiLicenseFtn,
+            27 => StatusError::NoApiLicenseJava,
+            28 => StatusError::NoApiLicenseJovial,
+            29 => StatusError::NoApiLicensePascal,
+            30 => StatusError::NoApiLicensePlm,
+            31 => StatusError::NoApiLicensePython,
+            32 => StatusError::NoApiLicenseWeb,
+            33 => StatusError::NoApiLicenseVhdl,
+            34 => StatusError::NoApiLicenseVerilog,
+            35 => StatusError::ReportUnableCreate,
+            36 => StatusError::ReportUnableDelete,
+            37 => StatusError::ReportUnableWrite,
+            38 => StatusError::UserAbort,
+            39 => StatusError::WrongProduct,
             _ => panic!("Unexpected status"),
         }
     }
