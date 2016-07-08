@@ -3,7 +3,7 @@ extern crate understand_sys;
 use std::fmt;
 
 use understand_sys::{UdbReference, udbReferenceLine, udbReferenceColumn, udbReferenceEntity,
-udbReferenceKind, udbReferenceScope, udbListReferenceFree, udbReferenceFile};
+udbReferenceKind, udbReferenceScope, udbListReferenceFree, udbReferenceFile, udbKindInverse};
 
 use kind::Kind;
 use entity::Entity;
@@ -39,12 +39,15 @@ impl Reference {
             true => None,
         }
     }
+    /// Return reference line.
     pub fn get_line(&self) -> i32 {
         unsafe{ udbReferenceLine(self.raw) as i32 }
     }
+    /// Return reference column.
     pub fn get_column(&self) -> i32 {
         unsafe{ udbReferenceColumn(self.raw) as i32 }
     }
+    /// Return reference kind.
     pub fn get_kind(&self) -> Kind {
         unsafe{ Kind::from_raw_kind(udbReferenceKind(self.raw)) }
     }
@@ -59,6 +62,10 @@ impl Reference {
     /// Return reference file.
     pub fn get_file(&self) -> Entity {
         unsafe { Entity::from_raw_entity(udbReferenceFile(self.raw)) }
+    }
+    /// Return the inverse of the reference kind.
+    pub fn get_inverse_kind(&self) -> Kind {
+        unsafe { Kind::from_raw_kind(udbKindInverse(self.get_kind().raw)) }
     }
 }
 
