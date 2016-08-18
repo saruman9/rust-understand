@@ -34,17 +34,19 @@ impl Db {
         unsafe{ CStr::from_ptr(udbDbName()).to_string_lossy().into_owned() }
     }
     pub fn get_version(&self) -> String {
+        // TODO Return String or i32?
         unsafe{ CStr::from_ptr(udbInfoBuild()).to_string_lossy().into_owned() }
     }
-    pub fn get_entities(&self) -> Option<ListEntity> {
+    pub fn get_entities(&self) -> ListEntity {
         unsafe {
             let mut udb_list_ents: *mut UdbEntity = mem::uninitialized();
             let mut udb_count_ents: i32 = 0;
 
             udbListEntity(&mut udb_list_ents, &mut udb_count_ents);
-            Entity::from_raw_list_ents(udb_list_ents, udb_count_ents)
+            ListEntity::from_raw(udb_list_ents, udb_count_ents)
         }
     }
+    /*
     /// Lookup and return an allocated list of entities by name and kind, if specified.
     /// !SLOWER! then lookup on Rust
     pub fn lookup_entity(&self, name: &str, kind: &str, search_in_shortname: bool)
@@ -106,6 +108,7 @@ impl Db {
             )
         }
     }
+    */
     pub fn get_languages(&self) -> Option<Vec<Language>> {
         unsafe {
             let lang: u16 = udbDbLanguage() as u16;

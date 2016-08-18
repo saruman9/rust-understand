@@ -5,11 +5,15 @@ extern crate time;
 use std::ffi::{CStr, CString};
 use std::mem;
 use std::fmt;
+use std::marker::PhantomData;
+use std::slice;
+use std::ops::Range;
 
+use db::Db;
 use language::Language;
-use kind::Kind;
 use library::Library;
-use reference::{Reference, ListReference};
+//use kind::Kind;
+//use reference::{Reference, ListReference};
 
 use understand_sys::{UdbReference, UdbEntity, udbListEntityFree, udbEntityId, udbEntityNameUnique,
 udbEntityNameLong, udbEntityNameSimple, udbEntityNameShort, udbEntityKind, udbEntityLanguage,
@@ -17,92 +21,142 @@ udbEntityLibrary, udbEntityTypetext, udbEntityValue, udbEntityFreetext, udbListR
 udbEntityNameAbsolute, udbEntityNameRelative, udbEntityRefs, udbListReferenceFile};
 
 
-#[derive(Clone, Debug)]
-pub struct Entity {
-    pub raw: UdbEntity,
+/// Structure of Entity.
+pub struct Entity<'ents> {
+    raw: UdbEntity,
+    _marker: PhantomData<&'ents UdbEntity>,
 }
 
-pub struct ListEntity {
-    pub raw: *mut UdbEntity,
-    pub list: Vec<Entity>,
-    pub old: bool,
+/// Opaque structure of list of entities.
+pub struct ListEntity<'db> {
+    raw: *mut UdbEntity,
+    len: usize,
+    _marker: PhantomData<&'db Db>,
+    //pub list: Vec<Entity>,
+    //pub old: bool,
 }
 
-impl Entity {
-    pub fn from_raw_entity(entity: UdbEntity) -> Self {
-            Entity{ raw: entity }
+/// An iterator over the Entity in list of entities.
+pub struct EntityIter<'ents> {
+    range: Range<usize>,
+    ents: &'ents ListEntity<'ents>,
+}
+
+impl<'db> ListEntity<'db> {
+
+    pub unsafe fn from_raw(raw: *mut UdbEntity, len: i32) -> ListEntity<'db> {
+        debug!("Created ListEntity from {:?} with {} length at {}",
+               raw,
+               len,
+               time::now().strftime("%S:%f").unwrap());
+
+        ListEntity {
+            raw: raw,
+            len: len as usize,
+            _marker: PhantomData,
+        }
     }
-    pub fn from_raw_list_ents(udb_list_ents: *mut UdbEntity, udb_count_ents: i32)
-                              -> Option<ListEntity> {
-        let mut ret: Vec<Entity> = vec!();
+
+    /// Gets the number of entity that exist in the ListEntity.
+    pub fn len(&self) -> usize {
+        self.len
+    }
+
+    /// Gets the Entity at the given index.
+    pub fn get_index(&self, index: usize) -> Option<Entity> {
         unsafe {
-            for i in 0..udb_count_ents {
-                let entity: UdbEntity = *udb_list_ents.offset(i as isize);
-                ret.push(Entity::from_raw_entity(entity));
+            if self.len > index {
+                let new_array = slice::from_raw_parts(self.raw, self.len);
+                Some(Entity::from_raw(new_array[index]))
+            } else {
+                None
             }
         }
-        match ret.is_empty() {
-            false => Some(ListEntity {
-                raw: udb_list_ents,
-                list: ret,
-                old: false,
-            }),
-            true => None,
+    }
+
+    /// Returns an iterator over the Entity in list of entities
+    pub fn iter(&self) -> EntityIter {
+        EntityIter {
+            range: 0..self.len(),
+            ents: self,
         }
     }
+}
+
+impl<'ents> Entity<'ents> {
+
+    unsafe fn from_raw(raw: UdbEntity) -> Entity<'ents> {
+        debug!("Created Entity from {:?} at {}",
+               raw,
+               time::now().strftime("%S:%f").unwrap());
+        Entity {
+            raw: raw,
+            _marker: PhantomData,
+        }
+    }
+
     /// Return the entity id. This is only valid until the db is changed.
-    pub fn get_id(&self) -> i32 {
+    pub fn id(&self) -> i32 {
         unsafe {
             udbEntityId(self.raw) as i32
         }
     }
+
     /// Return the entity unique name as String.
-    pub fn get_name_unique(&self) -> String {
+    pub fn name_unique(&self) -> String {
         unsafe {
             CStr::from_ptr(udbEntityNameUnique(self.raw)).to_string_lossy().into_owned()
         }
     }
+
     /// Return the entity long name as String. If there is no long name the short name is returned.
-    pub fn get_name_long(&self) -> String {
+    pub fn name_long(&self) -> String {
         unsafe {
             CStr::from_ptr(udbEntityNameLong(self.raw)).to_string_lossy().into_owned()
         }
     }
+
     /// Return the entity simple name as String.
-    pub fn get_name_simple(&self) -> String {
+    pub fn name_simple(&self) -> String {
         unsafe {
             CStr::from_ptr(udbEntityNameSimple(self.raw)).to_string_lossy().into_owned()
         }
     }
+
     /// Return the entity short name as String.
-    pub fn get_name_short(&self) -> String {
+    pub fn name_short(&self) -> String {
         unsafe {
             CStr::from_ptr(udbEntityNameShort(self.raw)).to_string_lossy().into_owned()
         }
     }
+
     /// Return the absolute name for file entity as String. May be error - segmentation fault.
-    pub unsafe fn get_name_absolute(&self) -> String {
+    pub unsafe fn name_absolute(&self) -> String {
             CStr::from_ptr(udbEntityNameAbsolute(self.raw)).to_string_lossy().into_owned()
     }
+
     /// Return the relative name for file entity as String.
-    pub fn get_name_relative(&self) -> String {
+    pub fn name_relative(&self) -> String {
         unsafe {
             CStr::from_ptr(udbEntityNameRelative(self.raw)).to_string_lossy().into_owned()
         }
     }
+
     /// Return the entity language.
-    pub fn get_language(&self) -> Option<Language> {
+    pub fn language(&self) -> Option<Language> {
         unsafe {
-            Language::from_raw_language(udbEntityLanguage(self.raw))
-        }
-    }
-    /// Return the entity library.
-    pub fn get_library(&self) -> Option<Library> {
-        unsafe {
-            Library::from_raw_library(udbEntityLibrary(self.raw))
+            Language::from_raw(udbEntityLanguage(self.raw))
         }
     }
 
+    /// Return the entity library.
+    pub fn library(&self) -> Option<Library> {
+        unsafe {
+            Library::from_raw(udbEntityLibrary(self.raw))
+        }
+    }
+
+    /*
     /// Return a string of the value associated with certain entities such as enumerators,
     /// initialized variables, default parameter values in function definitions and macros.
     pub fn get_value(&self) -> Option<String> {
@@ -190,18 +244,82 @@ impl Entity {
             Kind::from_raw_kind(udbEntityKind(self.raw))
         }
     }
+    pub fn from_raw_entity(entity: UdbEntity) -> Self {
+            Entity{ raw: entity }
+    }
+    pub fn from_raw_list_ents(udb_list_ents: *mut UdbEntity, udb_count_ents: i32)
+                              -> Option<ListEntity> {
+        let mut ret: Vec<Entity> = vec!();
+        unsafe {
+            for i in 0..udb_count_ents {
+                let entity: UdbEntity = *udb_list_ents.offset(i as isize);
+                ret.push(Entity::from_raw_entity(entity));
+            }
+        }
+        match ret.is_empty() {
+            false => Some(ListEntity {
+                raw: udb_list_ents,
+                list: ret,
+                old: false,
+            }),
+            true => None,
+        }
+    }
+    */
 }
 
-impl fmt::Display for Entity {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}\n\t{} - {}",
-               self.get_name_long(),
-               self.get_language().unwrap_or(Language::NONE),
-               self.get_kind().get_name_short())
+impl<'ents, 'iter> IntoIterator for &'iter ListEntity<'ents> {
+    type Item = Entity<'iter>;
+    type IntoIter = EntityIter<'iter>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
     }
 }
 
-impl Drop for ListEntity {
+impl<'ents> Iterator for EntityIter<'ents> {
+    type Item = Entity<'ents>;
+
+    fn next(&mut self) -> Option<Entity<'ents>> {
+        self.range.next().and_then(|i| self.ents.get_index(i))
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.range.size_hint()
+    }
+
+    fn count(self) -> usize {
+        self.size_hint().0
+    }
+}
+
+impl<'ents> DoubleEndedIterator for EntityIter<'ents> {
+    fn next_back(&mut self) -> Option<Entity<'ents>> {
+        self.range.next_back().and_then(|i| self.ents.get_index(i))
+    }
+}
+
+impl<'db> fmt::Debug for ListEntity<'db> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}:{}", self.raw, self.len)
+    }
+}
+
+impl<'ents> fmt::Debug for Entity<'ents> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self.raw)
+    }
+}
+
+impl<'ents> fmt::Display for Entity<'ents> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}\n\t{}",
+               self.name_long(),
+               self.language().unwrap_or(Language::NONE))
+    }
+}
+
+impl<'db> Drop for ListEntity<'db> {
     fn drop(&mut self) {
         debug!("Dropped ListEntity {:?} at {}",
                self.raw,
@@ -210,10 +328,3 @@ impl Drop for ListEntity {
         unsafe { udbListEntityFree(self.raw) };
     }
 }
-        debug!("Created ListEntity from {:?} with {} length at {}",
-               raw,
-               len,
-               time::now().strftime("%S:%f").unwrap());
-        debug!("Created Entity from {:?} at {}",
-               raw,
-               time::now().strftime("%S:%f").unwrap());
