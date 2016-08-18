@@ -30,14 +30,14 @@ impl Db {
             }
         }
     }
-    pub fn get_name(&self) -> String {
+    pub fn name(&self) -> String {
         unsafe{ CStr::from_ptr(udbDbName()).to_string_lossy().into_owned() }
     }
-    pub fn get_version(&self) -> String {
+    pub fn version(&self) -> String {
         // TODO Return String or i32?
         unsafe{ CStr::from_ptr(udbInfoBuild()).to_string_lossy().into_owned() }
     }
-    pub fn get_entities(&self) -> ListEntity {
+    pub fn entities(&self) -> ListEntity {
         unsafe {
             let mut udb_list_ents: *mut UdbEntity = mem::uninitialized();
             let mut udb_count_ents: i32 = 0;
