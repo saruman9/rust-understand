@@ -1,4 +1,6 @@
 extern crate understand_sys;
+extern crate log;
+extern crate time;
 
 use std::ffi::{CStr, CString};
 use std::mem;
@@ -201,6 +203,17 @@ impl fmt::Display for Entity {
 
 impl Drop for ListEntity {
     fn drop(&mut self) {
+        debug!("Dropped ListEntity {:?} at {}",
+               self.raw,
+               time::now().strftime("%S:%f").unwrap());
+
         unsafe { udbListEntityFree(self.raw) };
     }
 }
+        debug!("Created ListEntity from {:?} with {} length at {}",
+               raw,
+               len,
+               time::now().strftime("%S:%f").unwrap());
+        debug!("Created Entity from {:?} at {}",
+               raw,
+               time::now().strftime("%S:%f").unwrap());
