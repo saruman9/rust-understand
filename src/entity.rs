@@ -1,3 +1,4 @@
+// TODO Tests with test database
 extern crate understand_sys;
 extern crate log;
 extern crate time;
@@ -132,7 +133,7 @@ impl<'ents> Entity<'ents> {
 
     /// Return the absolute name for file entity as String. May be error - segmentation fault.
     pub unsafe fn name_absolute(&self) -> String {
-            CStr::from_ptr(udbEntityNameAbsolute(self.raw)).to_string_lossy().into_owned()
+        CStr::from_ptr(udbEntityNameAbsolute(self.raw)).to_string_lossy().into_owned()
     }
 
     /// Return the relative name for file entity as String.
@@ -156,10 +157,9 @@ impl<'ents> Entity<'ents> {
         }
     }
 
-    /*
     /// Return a string of the value associated with certain entities such as enumerators,
     /// initialized variables, default parameter values in function definitions and macros.
-    pub fn get_value(&self) -> Option<String> {
+    pub fn value(&self) -> Option<String> {
         unsafe {
             let value_raw: String = CStr::from_ptr(udbEntityValue(self.raw))
                 .to_string_lossy().into_owned();
@@ -169,8 +169,9 @@ impl<'ents> Entity<'ents> {
             }
         }
     }
+
     /// Return the entity typetext as a string.
-    pub fn get_typetext(&self) -> Option<String> {
+    pub fn typetext(&self) -> Option<String> {
         unsafe {
             let typetext_raw: String = CStr::from_ptr(udbEntityTypetext(self.raw))
                 .to_string_lossy().into_owned();
@@ -180,8 +181,9 @@ impl<'ents> Entity<'ents> {
             }
         }
     }
+
     /// Return debug information about CGraph(ControlFlow Graph)
-    pub fn get_cgraph(&self) -> Option<String> {
+    pub fn cgraph(&self) -> Option<String> {
         unsafe {
             let cgraph_text_raw = CString::new("CGraph").unwrap().as_ptr();
             let cgraph_raw: String = CStr::from_ptr(udbEntityFreetext(self.raw, cgraph_text_raw))
@@ -192,8 +194,10 @@ impl<'ents> Entity<'ents> {
             }
         }
     }
+
+    /*
     /// Return a vec of all references for entity.
-    pub fn get_references(&self) -> Option<ListReference> {
+    pub fn references(&self) -> Option<ListReference> {
         let list_refs: Option<ListReference>;
         unsafe {
             let mut udb_list_refs: *mut UdbReference = mem::uninitialized();
@@ -307,7 +311,31 @@ impl<'db> fmt::Debug for ListEntity<'db> {
 
 impl<'ents> fmt::Debug for Entity<'ents> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}", self.raw)
+        write!(f, "\
+raw: {raw:?}\n\
+id: {id}\n\
+name_unique: {n_unique}\n\
+name_long: {n_long}\n\
+name_simple: {n_simple}\n\
+name_short: {n_short}\n\
+name_relative: {n_relative}\n\
+languge: {lang}\n\
+value: {val}\n\
+typetext: {ttext}\n\
+cgraph: {freetext}\n\
+================================================================================",
+               raw=self.raw,
+               id=self.id(),
+               n_unique=self.name_unique(),
+               n_long=self.name_long(),
+               n_simple=self.name_simple(),
+               n_short=self.name_short(),
+               n_relative=self.name_relative(),
+               lang=self.language().unwrap_or(Language::NONE),
+               //lib=self.library().unwrap_or(""),
+               val=self.value().unwrap_or("".to_owned()),
+               ttext=self.typetext().unwrap_or("".to_owned()),
+               freetext=self.cgraph().unwrap_or("".to_owned()))
     }
 }
 
