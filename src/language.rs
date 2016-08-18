@@ -51,7 +51,7 @@ impl fmt::Display for Language {
 }
 
 impl Language {
-    pub fn from_raw_language(language: UdbLanguage) -> Option<Language> {
+    pub fn from_raw(language: UdbLanguage) -> Option<Language> {
         let lang: u16 = language as u16;
         if lang & UdbLanguage_::Udb_language_Ada as u16 != 0     { return Some(Language::Ada) };
         if lang & UdbLanguage_::Udb_language_Asm as u16 != 0     { return Some(Language::Asm) };

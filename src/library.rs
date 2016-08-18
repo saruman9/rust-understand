@@ -11,7 +11,7 @@ pub struct Library {
 }
 
 impl Library {
-    pub fn from_raw_library(library: UdbLibrary) -> Option<Self> {
+    pub fn from_raw(library: UdbLibrary) -> Option<Self> {
         unsafe {
             let name: String = CStr::from_ptr(udbLibraryName(library)).to_string_lossy().into_owned();
             if name.is_empty() {
