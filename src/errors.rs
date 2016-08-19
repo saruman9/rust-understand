@@ -2,7 +2,6 @@ use std::fmt;
 
 // TODO udbStatusText(status: UdbStatus) -> *const c_char - ?
 pub enum StatusError {
-    Okay,
     DBAlreadyOpen,
     DBBusy,
     DBChanged,
@@ -46,7 +45,6 @@ pub enum StatusError {
 impl StatusError {
     pub fn __description(&self) -> &str {
         match *self {
-            StatusError::Okay                     => "okay",
             StatusError::DBAlreadyOpen            => "database already open",
             StatusError::DBBusy                   => "database busy",
             StatusError::DBChanged                => "database changed",
