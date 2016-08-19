@@ -2,41 +2,40 @@ extern crate understand_sys;
 extern crate log;
 extern crate time;
 
-use std::path::PathBuf;
 use std::ffi::{CString, CStr};
 use std::mem;
-
-use language::Language;
-use errors::StatusError;
-use entity::{Entity, ListEntity};
 
 use understand_sys::{UdbEntity, udbDbOpen, udbDbLanguage, udbDbName, udbInfoBuild, UdbStatus,
 UdbLanguage_, udbDbClose, udbListEntity, udbLookupEntityByUniquename, udbListFile, udbLookupEntity};
 
-pub struct Db {
-    pub path: PathBuf,
-}
+use language::Language;
+use errors::StatusError;
+use entity::ListEntity;
+
+
+pub struct Db;
 
 impl Db {
+
+    /// Open Understand database.
     pub fn open(path: &str) -> Result<Self, StatusError> {
         unsafe {
             debug!("Created Db at {}", time::now().strftime("%M:%S.%f").unwrap());
-            let udb_status: StatusError = Db::get_status(udbDbOpen(
-                CString::new(path).unwrap().as_ptr()));
-
-            match udb_status {
-                StatusError::Okay => Ok(Db { path: PathBuf::from(path) }),
-                _ => Err(udb_status),
-            }
+            Db::status(udbDbOpen(CString::new(path).unwrap().as_ptr())).map(|_| Db)
         }
     }
+
+    /// Return name of database.
     pub fn name(&self) -> String {
         unsafe{ CStr::from_ptr(udbDbName()).to_string_lossy().into_owned() }
     }
+
+    /// Return version of database.
     pub fn version(&self) -> String {
-        // TODO Return String or i32?
         unsafe{ CStr::from_ptr(udbInfoBuild()).to_string_lossy().into_owned() }
     }
+
+    /// Return list of entities.
     pub fn entities(&self) -> ListEntity {
         unsafe {
             let mut udb_list_ents: *mut UdbEntity = mem::uninitialized();
@@ -46,6 +45,7 @@ impl Db {
             ListEntity::from_raw(udb_list_ents, udb_count_ents)
         }
     }
+
     /*
     /// Lookup and return an allocated list of entities by name and kind, if specified.
     /// !SLOWER! then lookup on Rust
@@ -109,7 +109,9 @@ impl Db {
         }
     }
     */
-    pub fn get_languages(&self) -> Option<Vec<Language>> {
+
+    /// Return vector of languages uses in database.
+    pub fn languages(&self) -> Option<Vec<Language>> {
         unsafe {
             let lang: u16 = udbDbLanguage() as u16;
             let mut ret: Vec<Language> = vec!();
@@ -136,48 +138,48 @@ impl Db {
         }
     }
 
-    fn get_status(udb_status: UdbStatus) -> StatusError {
+    fn status(udb_status: UdbStatus) -> Result<(), StatusError>  {
         match udb_status as u8 {
-            0  => StatusError::Okay,
-            1  => StatusError::DBAlreadyOpen,
-            2  => StatusError::DBBusy,
-            3  => StatusError::DBChanged,
-            4  => StatusError::DBCorrupt,
-            5  => StatusError::DBOldVersion,
-            6  => StatusError::DBUnknownVersion,
-            7  => StatusError::DBUnableCreate,
-            8  => StatusError::DBUnableDelete,
-            9  => StatusError::DBUnableModify,
-            10 => StatusError::DBUnableOpen,
-            11 => StatusError::DBUnableWrite,
-            12 => StatusError::DemoAnotherDBOpen,
-            13 => StatusError::DemoInvalid,
-            14 => StatusError::DrawNoFont,
-            15 => StatusError::DrawNoImage,
-            16 => StatusError::DrawTooBig,
-            17 => StatusError::DrawUnableCreateFile,
-            18 => StatusError::DrawUnsupportedFile,
-            19 => StatusError::LexerFileModified,
-            20 => StatusError::LexerFileUnreadable,
-            21 => StatusError::LexerUnsupportedLanguage,
-            22 => StatusError::NoApiLicense,
-            23 => StatusError::NoApiLicenseAda,
-            24 => StatusError::NoApiLicenseC,
-            25 => StatusError::NoApiLicenseCobol,
-            26 => StatusError::NoApiLicenseFtn,
-            27 => StatusError::NoApiLicenseJava,
-            28 => StatusError::NoApiLicenseJovial,
-            29 => StatusError::NoApiLicensePascal,
-            30 => StatusError::NoApiLicensePlm,
-            31 => StatusError::NoApiLicensePython,
-            32 => StatusError::NoApiLicenseWeb,
-            33 => StatusError::NoApiLicenseVhdl,
-            34 => StatusError::NoApiLicenseVerilog,
-            35 => StatusError::ReportUnableCreate,
-            36 => StatusError::ReportUnableDelete,
-            37 => StatusError::ReportUnableWrite,
-            38 => StatusError::UserAbort,
-            39 => StatusError::WrongProduct,
+            0  => Ok(()),
+            1  => Err(StatusError::DBAlreadyOpen),
+            2  => Err(StatusError::DBBusy),
+            3  => Err(StatusError::DBChanged),
+            4  => Err(StatusError::DBCorrupt),
+            5  => Err(StatusError::DBOldVersion),
+            6  => Err(StatusError::DBUnknownVersion),
+            7  => Err(StatusError::DBUnableCreate),
+            8  => Err(StatusError::DBUnableDelete),
+            9  => Err(StatusError::DBUnableModify),
+            10 => Err(StatusError::DBUnableOpen),
+            11 => Err(StatusError::DBUnableWrite),
+            12 => Err(StatusError::DemoAnotherDBOpen),
+            13 => Err(StatusError::DemoInvalid),
+            14 => Err(StatusError::DrawNoFont),
+            15 => Err(StatusError::DrawNoImage),
+            16 => Err(StatusError::DrawTooBig),
+            17 => Err(StatusError::DrawUnableCreateFile),
+            18 => Err(StatusError::DrawUnsupportedFile),
+            19 => Err(StatusError::LexerFileModified),
+            20 => Err(StatusError::LexerFileUnreadable),
+            21 => Err(StatusError::LexerUnsupportedLanguage),
+            22 => Err(StatusError::NoApiLicense),
+            23 => Err(StatusError::NoApiLicenseAda),
+            24 => Err(StatusError::NoApiLicenseC),
+            25 => Err(StatusError::NoApiLicenseCobol),
+            26 => Err(StatusError::NoApiLicenseFtn),
+            27 => Err(StatusError::NoApiLicenseJava),
+            28 => Err(StatusError::NoApiLicenseJovial),
+            29 => Err(StatusError::NoApiLicensePascal),
+            30 => Err(StatusError::NoApiLicensePlm),
+            31 => Err(StatusError::NoApiLicensePython),
+            32 => Err(StatusError::NoApiLicenseWeb),
+            33 => Err(StatusError::NoApiLicenseVhdl),
+            34 => Err(StatusError::NoApiLicenseVerilog),
+            35 => Err(StatusError::ReportUnableCreate),
+            36 => Err(StatusError::ReportUnableDelete),
+            37 => Err(StatusError::ReportUnableWrite),
+            38 => Err(StatusError::UserAbort),
+            39 => Err(StatusError::WrongProduct),
             _ => panic!("Unexpected status"),
         }
     }
