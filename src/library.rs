@@ -5,30 +5,26 @@ use std::fmt;
 
 use understand_sys::{UdbLibrary, udbLibraryName};
 
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Library {
-    pub name: String,
+    raw: UdbLibrary,
 }
 
 impl Library {
-    pub fn from_raw(library: UdbLibrary) -> Option<Self> {
+
+    pub unsafe fn from_raw(library: UdbLibrary) -> Self {
+        Library { raw: library }
+    }
+
+    /// Return the library name as a temporary string. Never return NULL.
+    pub fn name(&self) -> Option<&str> {
         unsafe {
-            let name: String = CStr::from_ptr(udbLibraryName(library)).to_string_lossy().into_owned();
-            if name.is_empty() {
-                None
-            } else {
-                Some(
-                    Library {
-                        name: name,
-                    }
-                )
-            }
+            CStr::from_ptr(udbLibraryName(self.raw)).to_str().ok()
         }
     }
 }
 
 impl fmt::Display for Library {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.name)
+        write!(f, "{}", self.name().unwrap_or_default())
     }
 }
