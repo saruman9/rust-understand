@@ -10,16 +10,17 @@ use std::marker::PhantomData;
 use std::slice;
 use std::ops::Range;
 
+use understand_sys::{UdbReference, UdbEntity, UdbLibrary, udbListEntityFree, udbEntityId,
+udbEntityNameUnique, udbEntityNameLong, udbEntityNameSimple, udbEntityNameShort, udbEntityKind,
+udbEntityLanguage, udbEntityLibrary, udbEntityTypetext, udbEntityValue, udbEntityFreetext,
+udbListReference, udbEntityNameAbsolute, udbEntityNameRelative, udbEntityRefs,
+udbListReferenceFile};
+
 use db::Db;
 use language::Language;
 use library::Library;
 //use kind::Kind;
 //use reference::{Reference, ListReference};
-
-use understand_sys::{UdbReference, UdbEntity, udbListEntityFree, udbEntityId, udbEntityNameUnique,
-udbEntityNameLong, udbEntityNameSimple, udbEntityNameShort, udbEntityKind, udbEntityLanguage,
-udbEntityLibrary, udbEntityTypetext, udbEntityValue, udbEntityFreetext, udbListReference,
-udbEntityNameAbsolute, udbEntityNameRelative, udbEntityRefs, udbListReferenceFile};
 
 
 /// Structure of Entity.
@@ -33,8 +34,6 @@ pub struct ListEntity<'db> {
     raw: *mut UdbEntity,
     len: usize,
     _marker: PhantomData<&'db Db>,
-    //pub list: Vec<Entity>,
-    //pub old: bool,
 }
 
 /// An iterator over the Entity in list of entities.
@@ -66,9 +65,8 @@ impl<'db> ListEntity<'db> {
     /// Gets the Entity at the given index.
     pub fn get_index(&self, index: usize) -> Option<Entity> {
         unsafe {
-            if self.len > index {
-                let new_array = slice::from_raw_parts(self.raw, self.len);
-                Some(Entity::from_raw(new_array[index]))
+            if index < self.len {
+                Some(Entity::from_raw(*self.raw.offset(index as isize)))
             } else {
                 None
             }
@@ -103,43 +101,44 @@ impl<'ents> Entity<'ents> {
         }
     }
 
-    /// Return the entity unique name as String.
-    pub fn name_unique(&self) -> String {
+    /// Return the entity unique name as a temporary string.
+    pub fn name_unique(&self) -> Option<&str> {
         unsafe {
-            CStr::from_ptr(udbEntityNameUnique(self.raw)).to_string_lossy().into_owned()
+            CStr::from_ptr(udbEntityNameUnique(self.raw)).to_str().ok()
         }
     }
 
-    /// Return the entity long name as String. If there is no long name the short name is returned.
-    pub fn name_long(&self) -> String {
+    /// Return the entity long name as temporary string.
+    /// If there is no long name the short name is returned.
+    pub fn name_long(&self) -> Option<&str> {
         unsafe {
-            CStr::from_ptr(udbEntityNameLong(self.raw)).to_string_lossy().into_owned()
+            CStr::from_ptr(udbEntityNameLong(self.raw)).to_str().ok()
         }
     }
 
-    /// Return the entity simple name as String.
-    pub fn name_simple(&self) -> String {
+    /// Return the entity simple name as temporary string.
+    pub fn name_simple(&self) -> Option<&str> {
         unsafe {
-            CStr::from_ptr(udbEntityNameSimple(self.raw)).to_string_lossy().into_owned()
+            CStr::from_ptr(udbEntityNameSimple(self.raw)).to_str().ok()
         }
     }
 
-    /// Return the entity short name as String.
-    pub fn name_short(&self) -> String {
+    /// Return the entity short name as temporary string.
+    pub fn name_short(&self) -> Option<&str> {
         unsafe {
-            CStr::from_ptr(udbEntityNameShort(self.raw)).to_string_lossy().into_owned()
+            CStr::from_ptr(udbEntityNameShort(self.raw)).to_str().ok()
         }
     }
 
-    /// Return the absolute name for file entity as String. May be error - segmentation fault.
-    pub unsafe fn name_absolute(&self) -> String {
-        CStr::from_ptr(udbEntityNameAbsolute(self.raw)).to_string_lossy().into_owned()
+    /// Return the absolute name for file entity as temporary string. May be error - segmentation fault.
+    pub unsafe fn name_absolute(&self) -> Option<&str> {
+        CStr::from_ptr(udbEntityNameAbsolute(self.raw)).to_str().ok()
     }
 
-    /// Return the relative name for file entity as String.
-    pub fn name_relative(&self) -> String {
+    /// Return the relative name for file entity as temporary string.
+    pub fn name_relative(&self) -> Option<&str> {
         unsafe {
-            CStr::from_ptr(udbEntityNameRelative(self.raw)).to_string_lossy().into_owned()
+            CStr::from_ptr(udbEntityNameRelative(self.raw)).to_str().ok()
         }
     }
 
@@ -150,8 +149,8 @@ impl<'ents> Entity<'ents> {
         }
     }
 
-    /// Return the entity library.
-    pub fn library(&self) -> Option<Library> {
+    /// Return the entity library. Never return NULL.
+    pub fn library(&self) -> Library {
         unsafe {
             Library::from_raw(udbEntityLibrary(self.raw))
         }
@@ -159,39 +158,24 @@ impl<'ents> Entity<'ents> {
 
     /// Return a string of the value associated with certain entities such as enumerators,
     /// initialized variables, default parameter values in function definitions and macros.
-    pub fn value(&self) -> Option<String> {
+    pub fn value(&self) -> Option<&str> {
         unsafe {
-            let value_raw: String = CStr::from_ptr(udbEntityValue(self.raw))
-                .to_string_lossy().into_owned();
-            match value_raw.is_empty() {
-                false => Some(value_raw),
-                true  => None,
-            }
+            CStr::from_ptr(udbEntityValue(self.raw)).to_str().ok()
         }
     }
 
-    /// Return the entity typetext as a string.
-    pub fn typetext(&self) -> Option<String> {
+    /// Return the entity typetext as temporary string.
+    pub fn typetext(&self) -> Option<&str> {
         unsafe {
-            let typetext_raw: String = CStr::from_ptr(udbEntityTypetext(self.raw))
-                .to_string_lossy().into_owned();
-            match typetext_raw.is_empty() {
-                false => Some(typetext_raw),
-                true  => None,
-            }
+            CStr::from_ptr(udbEntityTypetext(self.raw)).to_str().ok()
         }
     }
 
     /// Return debug information about CGraph(ControlFlow Graph)
-    pub fn cgraph(&self) -> Option<String> {
+    pub fn cgraph(&self) -> Option<&str> {
         unsafe {
             let cgraph_text_raw = CString::new("CGraph").unwrap().as_ptr();
-            let cgraph_raw: String = CStr::from_ptr(udbEntityFreetext(self.raw, cgraph_text_raw))
-                .to_string_lossy().into_owned();
-            match cgraph_raw.is_empty() {
-                false => Some(cgraph_raw),
-                true  => None,
-            }
+            CStr::from_ptr(udbEntityFreetext(self.raw, cgraph_text_raw)).to_str().ok()
         }
     }
 
@@ -319,31 +303,32 @@ name_long: {n_long}\n\
 name_simple: {n_simple}\n\
 name_short: {n_short}\n\
 name_relative: {n_relative}\n\
-languge: {lang}\n\
+library: {lib}\n\
+language: {lang}\n\
 value: {val}\n\
 typetext: {ttext}\n\
 cgraph: {freetext}\n\
 ================================================================================",
                raw=self.raw,
                id=self.id(),
-               n_unique=self.name_unique(),
-               n_long=self.name_long(),
-               n_simple=self.name_simple(),
-               n_short=self.name_short(),
-               n_relative=self.name_relative(),
-               lang=self.language().unwrap_or(Language::NONE),
-               //lib=self.library().unwrap_or(""),
-               val=self.value().unwrap_or("".to_owned()),
-               ttext=self.typetext().unwrap_or("".to_owned()),
-               freetext=self.cgraph().unwrap_or("".to_owned()))
+               n_unique=self.name_unique().unwrap_or_default(),
+               n_long=self.name_long().unwrap_or_default(),
+               n_simple=self.name_simple().unwrap_or_default(),
+               n_short=self.name_short().unwrap_or_default(),
+               n_relative=self.name_relative().unwrap_or_default(),
+               lang=self.language().unwrap_or_default(),
+               lib=self.library(),
+               val=self.value().unwrap_or_default(),
+               ttext=self.typetext().unwrap_or_default(),
+               freetext=self.cgraph().unwrap_or_default())
     }
 }
 
 impl<'ents> fmt::Display for Entity<'ents> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}\n\t{}",
-               self.name_long(),
-               self.language().unwrap_or(Language::NONE))
+               self.name_long().unwrap_or_default(),
+               self.language().unwrap_or_default())
     }
 }
 
