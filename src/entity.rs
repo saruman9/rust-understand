@@ -19,8 +19,8 @@ udbListReferenceFile};
 use db::Db;
 use language::Language;
 use library::Library;
+use reference::{Reference, ListReference};
 //use kind::Kind;
-//use reference::{Reference, ListReference};
 
 
 /// Structure of Entity.
@@ -57,10 +57,8 @@ impl<'db> ListEntity<'db> {
         }
     }
 
-    /// Gets the number of entity that exist in the ListEntity.
-    pub fn len(&self) -> usize {
-        self.len
-    }
+    /// Gets the number of entities that exist in the ListEntity.
+    pub fn len(&self) -> usize { self.len }
 
     /// Gets the Entity at the given index.
     pub fn get_index(&self, index: usize) -> Option<Entity> {
@@ -84,7 +82,7 @@ impl<'db> ListEntity<'db> {
 
 impl<'ents> Entity<'ents> {
 
-    unsafe fn from_raw(raw: UdbEntity) -> Entity<'ents> {
+    pub unsafe fn from_raw(raw: UdbEntity) -> Entity<'ents> {
         debug!("Created Entity from {:?} at {}",
                raw,
                time::now().strftime("%M:%S.%f").unwrap());
@@ -179,20 +177,18 @@ impl<'ents> Entity<'ents> {
         }
     }
 
-    /*
-    /// Return a vec of all references for entity.
-    pub fn references(&self) -> Option<ListReference> {
-        let list_refs: Option<ListReference>;
+    /// Return a list of Reference.
+    pub fn references(&self) -> ListReference {
         unsafe {
             let mut udb_list_refs: *mut UdbReference = mem::uninitialized();
             let mut udb_count_refs: i32 = 0;
 
             udbListReference(self.raw, &mut udb_list_refs, &mut udb_count_refs);
-            list_refs = Reference::from_raw_list_refs(udb_list_refs, udb_count_refs);
-
-            list_refs
+            ListReference::from_raw(udb_list_refs, udb_count_refs)
         }
     }
+
+    /*
     /// Return an allocated list of all references within file.
     pub fn get_references_file(&self) -> Option<ListReference> {
         unsafe {
