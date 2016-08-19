@@ -7,5 +7,5 @@ pub mod entity;
 pub mod errors;
 pub mod language;
 pub mod library;
+pub mod reference;
 //pub mod kind;
-//pub mod reference;
