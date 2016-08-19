@@ -20,7 +20,7 @@ pub struct Db {
 impl Db {
     pub fn open(path: &str) -> Result<Self, StatusError> {
         unsafe {
-            debug!("Created Db at {}", time::now().strftime("%S:%f").unwrap());
+            debug!("Created Db at {}", time::now().strftime("%M:%S.%f").unwrap());
             let udb_status: StatusError = Db::get_status(udbDbOpen(
                 CString::new(path).unwrap().as_ptr()));
 
@@ -185,7 +185,7 @@ impl Db {
 
 impl Drop for Db {
     fn drop(&mut self) {
-        debug!("Dropped Db at {}", time::now().strftime("%S:%f").unwrap());
+        debug!("Dropped Db at {}", time::now().strftime("%M:%S.%f").unwrap());
         unsafe{
             udbDbClose();
         }

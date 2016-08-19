@@ -49,7 +49,7 @@ impl<'db> ListEntity<'db> {
         debug!("Created ListEntity from {:?} with {} length at {}",
                raw,
                len,
-               time::now().strftime("%S:%f").unwrap());
+               time::now().strftime("%M:%S.%f").unwrap());
 
         ListEntity {
             raw: raw,
@@ -89,7 +89,7 @@ impl<'ents> Entity<'ents> {
     unsafe fn from_raw(raw: UdbEntity) -> Entity<'ents> {
         debug!("Created Entity from {:?} at {}",
                raw,
-               time::now().strftime("%S:%f").unwrap());
+               time::now().strftime("%M:%S.%f").unwrap());
         Entity {
             raw: raw,
             _marker: PhantomData,
@@ -351,7 +351,7 @@ impl<'db> Drop for ListEntity<'db> {
     fn drop(&mut self) {
         debug!("Dropped ListEntity {:?} at {}",
                self.raw,
-               time::now().strftime("%S:%f").unwrap());
+               time::now().strftime("%M:%S.%f").unwrap());
 
         unsafe { udbListEntityFree(self.raw) };
     }
