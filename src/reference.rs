@@ -21,10 +21,10 @@ pub struct Reference<'refs> {
 }
 
 /// Opaque structure of list of references.
-pub struct ListReference<'ents> {
+pub struct ListReference<'db> {
     raw: *mut UdbReference,
     len: usize,
-    _marker: PhantomData<&'ents UdbEntity>,
+    _marker: PhantomData<&'db Db>,
 }
 
 /// An iterator over th Reference in list of references.
@@ -33,9 +33,9 @@ pub struct ReferenceIter<'refs> {
     refs: &'refs ListReference<'refs>,
 }
 
-impl<'ents> ListReference<'ents> {
+impl<'db> ListReference<'db> {
 
-    pub unsafe fn from_raw(raw: *mut UdbReference, len: i32) -> ListReference<'ents> {
+    pub unsafe fn from_raw(raw: *mut UdbReference, len: i32) -> ListReference<'db> {
         debug!("Created ListReference from {:?} with {} length at {}",
                raw,
                len,
@@ -149,13 +149,16 @@ impl<'refs> DoubleEndedIterator for ReferenceIter<'refs> {
     }
 }
 
-impl<'ents> fmt::Debug for ListReference<'ents> {
+impl<'db> fmt::Debug for ListReference<'db> {
+
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{:?}:{}", self.raw, self.len)
     }
 }
 
 impl<'refs> fmt::Debug for Reference<'refs> {
+
+    /// TODO write issue - don't expect lifetimes errors in std::format!()
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{scope} ({line}) {kind}
     kind->longname: {kind}
@@ -173,7 +176,7 @@ impl<'refs> fmt::Debug for Reference<'refs> {
     }
 }
 
-impl<'ents> Drop for ListReference<'ents> {
+impl<'db> Drop for ListReference<'db> {
     fn drop(&mut self) {
         debug!("Dropped ListReference {:?} at {}",
                self.raw,
