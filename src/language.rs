@@ -26,8 +26,8 @@ pub enum Language {
 }
 
 impl Language {
-    pub fn from_raw(language: UdbLanguage) -> Option<Language> {
-        let lang: u16 = language as u16;
+    pub fn from_raw(raw: UdbLanguage) -> Option<Language> {
+        let lang: u16 = raw as u16;
         if lang & UdbLanguage_::Udb_language_Ada as u16 != 0     { return Some(Language::Ada) };
         if lang & UdbLanguage_::Udb_language_Asm as u16 != 0     { return Some(Language::Asm) };
         if lang & UdbLanguage_::Udb_language_Basic as u16 != 0   { return Some(Language::Basic) };
