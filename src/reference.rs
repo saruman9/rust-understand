@@ -10,8 +10,9 @@ use understand_sys::{UdbReference, UdbEntity, udbReferenceLine, udbReferenceColu
 udbReferenceEntity, udbReferenceKind, udbReferenceScope, udbListReferenceFree, udbReferenceFile,
 udbKindInverse};
 
+use db::Db;
 use entity::Entity;
-//use kind::Kind;
+use kind::Kind;
 
 /// Structure of Reference.
 pub struct Reference<'refs> {
@@ -102,14 +103,16 @@ impl<'refs> Reference<'refs> {
     pub fn file(&self) -> Entity {
         unsafe { Entity::from_raw(udbReferenceFile(self.raw)) }
     }
+
+    /// Return reference kind.
+    pub fn kind(&self) -> Kind {
+        unsafe{ Kind::from_raw(udbReferenceKind(self.raw)) }
+    }
+
     /*
     /// Return the inverse of the reference kind.
     pub fn get_inverse_kind(&self) -> Kind {
         unsafe { Kind::from_raw_kind(udbKindInverse(self.get_kind().raw)) }
-    }
-    /// Return reference kind.
-    pub fn get_kind(&self) -> Kind {
-        unsafe{ Kind::from_raw_kind(udbReferenceKind(self.raw)) }
     }
     */
 }
@@ -140,6 +143,7 @@ impl<'refs, 'iter> IntoIterator for &'iter ListReference<'refs> {
 }
 
 impl<'refs> DoubleEndedIterator for ReferenceIter<'refs> {
+
     fn next_back(&mut self) -> Option<Reference<'refs>> {
         self.range.next_back().and_then(|i| self.refs.get_index(i))
     }
@@ -153,21 +157,19 @@ impl<'ents> fmt::Debug for ListReference<'ents> {
 
 impl<'refs> fmt::Debug for Reference<'refs> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "
-{scope} ({line}) {kind}
+        write!(f, "{scope} ({line}) {kind}
     kind->longname: {kind}
     ent->name: {ent}
     scope->name: {scope}
     file->longname: {file}
     line: {line}
     column: {column}",
-                ent=self.entity().name_short().unwrap_or_default(),
+                ent=self.entity().name_short(),
+                scope=self.scope().name_short(),
                 line=self.line(),
                 column=self.column(),
-                scope=self.scope().name_short().unwrap_or_default(),
-                //kind=self.get_kind().name_short(),
-                kind="",
-                file=self.file().name_long().unwrap_or_default())
+                kind=self.kind().name_short(),
+                file=self.file().name_long())
     }
 }
 

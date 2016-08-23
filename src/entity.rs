@@ -19,7 +19,7 @@ use db::Db;
 use language::Language;
 use library::Library;
 use reference::{Reference, ListReference};
-//use kind::Kind;
+use kind::Kind;
 
 
 /// Structure of Entity.
@@ -185,6 +185,12 @@ impl<'ents> Entity<'ents> {
         }
     }
 
+    /// Return the entity kind.
+    pub fn kind(&self) -> Kind {
+        unsafe {
+            Kind::from_raw(udbEntityKind(self.raw))
+        }
+    }
     /*
     /// Return an allocated list of all references within file.
     pub fn get_references_file(&self) -> Option<ListReference> {
@@ -218,12 +224,6 @@ impl<'ents> Entity<'ents> {
             list_refs = Reference::from_raw_list_refs(udb_list_refs, udb_count_refs);
         }
         list_refs
-    }
-    /// Return the entity kind.
-    pub fn get_kind(&self) -> Kind {
-        unsafe {
-            Kind::from_raw_kind(udbEntityKind(self.raw))
-        }
     }
     pub fn from_raw_entity(entity: UdbEntity) -> Self {
             Entity{ raw: entity }

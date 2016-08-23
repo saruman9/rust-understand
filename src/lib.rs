@@ -8,4 +8,4 @@ pub mod errors;
 pub mod language;
 pub mod library;
 pub mod reference;
-//pub mod kind;
+pub mod kind;
