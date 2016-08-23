@@ -7,7 +7,6 @@ use std::ffi::{CStr, CString};
 use std::mem;
 use std::fmt;
 use std::marker::PhantomData;
-use std::slice;
 use std::ops::Range;
 
 use understand_sys::{UdbReference, UdbEntity, UdbLibrary, udbListEntityFree, udbEntityId,
@@ -65,9 +64,7 @@ impl<'db> ListEntity<'db> {
         unsafe {
             if index < self.len {
                 Some(Entity::from_raw(*self.raw.offset(index as isize)))
-            } else {
-                None
-            }
+            } else { None }
         }
     }
 
@@ -99,44 +96,44 @@ impl<'ents> Entity<'ents> {
         }
     }
 
-    /// Return the entity unique name as a temporary string.
-    pub fn name_unique(&self) -> Option<&str> {
+    /// Return the entity unique name as string.
+    pub fn name_unique(&self) -> String {
         unsafe {
-            CStr::from_ptr(udbEntityNameUnique(self.raw)).to_str().ok()
+            CStr::from_ptr(udbEntityNameUnique(self.raw)).to_string_lossy().into_owned()
         }
     }
 
-    /// Return the entity long name as temporary string.
+    /// Return the entity long name as string.
     /// If there is no long name the short name is returned.
-    pub fn name_long(&self) -> Option<&str> {
+    pub fn name_long(&self) -> String {
         unsafe {
-            CStr::from_ptr(udbEntityNameLong(self.raw)).to_str().ok()
+            CStr::from_ptr(udbEntityNameLong(self.raw)).to_string_lossy().into_owned()
         }
     }
 
-    /// Return the entity simple name as temporary string.
-    pub fn name_simple(&self) -> Option<&str> {
+    /// Return the entity simple name as string.
+    pub fn name_simple(&self) -> String {
         unsafe {
-            CStr::from_ptr(udbEntityNameSimple(self.raw)).to_str().ok()
+            CStr::from_ptr(udbEntityNameSimple(self.raw)).to_string_lossy().into_owned()
         }
     }
 
-    /// Return the entity short name as temporary string.
-    pub fn name_short(&self) -> Option<&str> {
+    /// Return the entity short name as string.
+    pub fn name_short(&self) -> String {
         unsafe {
-            CStr::from_ptr(udbEntityNameShort(self.raw)).to_str().ok()
+            CStr::from_ptr(udbEntityNameShort(self.raw)).to_string_lossy().into_owned()
         }
     }
 
-    /// Return the absolute name for file entity as temporary string. May be error - segmentation fault.
-    pub unsafe fn name_absolute(&self) -> Option<&str> {
-        CStr::from_ptr(udbEntityNameAbsolute(self.raw)).to_str().ok()
+    /// Return the absolute name for file entity as string. May be error - segmentation fault.
+    pub unsafe fn name_absolute(&self) -> String {
+        CStr::from_ptr(udbEntityNameAbsolute(self.raw)).to_string_lossy().into_owned()
     }
 
-    /// Return the relative name for file entity as temporary string.
-    pub fn name_relative(&self) -> Option<&str> {
+    /// Return the relative name for file entity as string.
+    pub fn name_relative(&self) -> String {
         unsafe {
-            CStr::from_ptr(udbEntityNameRelative(self.raw)).to_str().ok()
+            CStr::from_ptr(udbEntityNameRelative(self.raw)).to_string_lossy().into_owned()
         }
     }
 
@@ -156,24 +153,24 @@ impl<'ents> Entity<'ents> {
 
     /// Return a string of the value associated with certain entities such as enumerators,
     /// initialized variables, default parameter values in function definitions and macros.
-    pub fn value(&self) -> Option<&str> {
+    pub fn value(&self) -> String {
         unsafe {
-            CStr::from_ptr(udbEntityValue(self.raw)).to_str().ok()
+            CStr::from_ptr(udbEntityValue(self.raw)).to_string_lossy().into_owned()
         }
     }
 
-    /// Return the entity typetext as temporary string.
-    pub fn typetext(&self) -> Option<&str> {
+    /// Return the entity typetext as string.
+    pub fn typetext(&self) -> String {
         unsafe {
-            CStr::from_ptr(udbEntityTypetext(self.raw)).to_str().ok()
+            CStr::from_ptr(udbEntityTypetext(self.raw)).to_string_lossy().into_owned()
         }
     }
 
-    /// Return debug information about CGraph(ControlFlow Graph)
-    pub fn cgraph(&self) -> Option<&str> {
+    /// Return debug information about CGraph(ControlFlow Graph) as string.
+    pub fn cgraph(&self) -> String {
         unsafe {
             let cgraph_text_raw = CString::new("CGraph").unwrap().as_ptr();
-            CStr::from_ptr(udbEntityFreetext(self.raw, cgraph_text_raw)).to_str().ok()
+            CStr::from_ptr(udbEntityFreetext(self.raw, cgraph_text_raw)).to_string_lossy().into_owned()
         }
     }
 
@@ -307,23 +304,23 @@ cgraph: {freetext}\n\
 ================================================================================",
                raw=self.raw,
                id=self.id(),
-               n_unique=self.name_unique().unwrap_or_default(),
-               n_long=self.name_long().unwrap_or_default(),
-               n_simple=self.name_simple().unwrap_or_default(),
-               n_short=self.name_short().unwrap_or_default(),
-               n_relative=self.name_relative().unwrap_or_default(),
+               n_unique=self.name_unique(),
+               n_long=self.name_long(),
+               n_simple=self.name_simple(),
+               n_short=self.name_short(),
+               n_relative=self.name_relative(),
                lang=self.language().unwrap_or_default(),
                lib=self.library(),
-               val=self.value().unwrap_or_default(),
-               ttext=self.typetext().unwrap_or_default(),
-               freetext=self.cgraph().unwrap_or_default())
+               val=self.value(),
+               ttext=self.typetext(),
+               freetext=self.cgraph())
     }
 }
 
 impl<'ents> fmt::Display for Entity<'ents> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}\n\t{}",
-               self.name_long().unwrap_or_default(),
+               self.name_long(),
                self.language().unwrap_or_default())
     }
 }
