@@ -108,13 +108,6 @@ impl<'refs> Reference<'refs> {
     pub fn kind(&self) -> Kind {
         unsafe{ Kind::from_raw(udbReferenceKind(self.raw)) }
     }
-
-    /*
-    /// Return the inverse of the reference kind.
-    pub fn get_inverse_kind(&self) -> Kind {
-        unsafe { Kind::from_raw_kind(udbKindInverse(self.get_kind().raw)) }
-    }
-    */
 }
 
 impl<'refs> Iterator for ReferenceIter<'refs> {
