@@ -5,9 +5,12 @@ extern crate time;
 use std::ffi::{CStr, CString};
 use std::marker::PhantomData;
 use std::ops::Range;
+use std::mem;
+use std::fmt;
 
 use understand_sys::{UdbKind, UdbKindList, udbKindLongname, udbKindShortname, udbIsKindFile,
-udbKindLanguage, udbIsKind, udbKindInverse, udbKindList};
+udbKindLanguage, udbIsKind, udbKindInverse, udbKindList, udbListKindEntity, udbListKindFree,
+udbListKindReference};
 
 use db::Db;
 use language::Language;
@@ -55,6 +58,28 @@ impl<'db> ListKind<'db> {
             if index < self.len {
                 Some(Kind::from_raw(*self.raw.offset(index as isize)))
             } else { None }
+        }
+    }
+
+    /// Return list of all entity kinds.
+    pub fn kinds_of_ents() -> ListKind<'db> {
+        unsafe{
+            let mut list_kind_raw: *mut UdbKind = mem::uninitialized();
+            let mut count_kinds: i32 = 0;
+            udbListKindEntity(&mut list_kind_raw, &mut count_kinds);
+
+            ListKind::from_raw(list_kind_raw, count_kinds)
+        }
+    }
+
+    /// Return list of all reference kinds.
+    pub fn kinds_of_refs() -> ListKind<'db> {
+        unsafe {
+            let mut list_kind_raw: *mut UdbKind = mem::uninitialized();
+            let mut count_kinds: i32 = 0;
+            udbListKindReference(&mut list_kind_raw, &mut count_kinds);
+
+            ListKind::from_raw(list_kind_raw, count_kinds)
         }
     }
 
@@ -192,35 +217,53 @@ impl<'kinds> Kind<'kinds> {
             Kind::from_raw(udbKindInverse(self.raw))
         }
     }
+
 }
 
-/*
-    // Return an allocated copy of kindlist that must be freed with
-    // udbKindListFree()
-    pub fn udbKindListCopy(kindlist: UdbKindList) -> UdbKindList;
+impl<'kinds, 'iter> IntoIterator for &'iter ListKind<'kinds> {
+    type Item = Kind<'iter>;
+    type IntoIter = KindIter<'iter>;
 
-    // Free an allocated kindlist.
-    pub fn udbKindListFree(kindlist: UdbKindList);
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
 
-    // Return true if kind is in the kindlist.
-    pub fn udbKindLocate(kind     : UdbKind,
-                         kindlist : UdbKindList) -> c_int;
+impl<'kinds> Iterator for KindIter<'kinds> {
+    type Item = Kind<'kinds>;
 
-    // Parse the kind text and return an allocated kindlist that must be freed
-    // with udbKindListFree().
-    pub fn udbKindParse(text: *const c_char) -> UdbKindList;
+    fn next(&mut self) -> Option<Kind<'kinds>> {
+        self.range.next().and_then(|i| self.kinds.get_index(i))
+    }
 
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.range.size_hint()
+    }
 
-    // Return allocated list of all entity kinds. Call udbListKindFree() to free
-    // list.
-    pub fn udbListKindEntity(list  : *mut *mut UdbKind,
-                             items : *mut c_int);
+    fn count(self) -> usize {
+        self.range.size_hint().0
+    }
+}
 
-    // Free an allocated list of kinds.
-    pub fn udbListKindFree(list: *mut UdbKind);
+impl<'kinds> fmt::Display for Kind<'kinds> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.name_long())
+    }
+}
 
-    // Return allocated list of all reference kinds. Call udbListKindFree() to
-    // free list.
-    pub fn udbListKindReference(list  : *mut *mut UdbKind,
-                                items : *mut c_int);
-*/
+impl<'kinds> fmt::Debug for Kind<'kinds> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}:{}", self.raw, self.name_long())
+    }
+}
+
+impl<'db> Drop for ListKind<'db> {
+    fn drop(&mut self) {
+        debug!("Dropped ListKind {:?} at {}",
+               self.raw,
+               time::now().strftime("%M:%S.%f").unwrap());
+        unsafe{
+            udbListKindFree(self.raw);
+        }
+    }
+}
