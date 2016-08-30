@@ -21,14 +21,6 @@ pub struct Kind {
 
 pub trait KindList {
 
-    /// Scheme of UdbKindList:
-    /// *const (length: i64, kinds: *const [i32; length]); length right shifted on 0x20 (length >> 0x20).
-    /// TODO Expect error on 32bit machines.
-    unsafe fn from_raw(&mut self, raw: UdbKindList);
-
-    /// Parse the kind text.
-    fn parse(&mut self, str: &str);
-
     /// Return true if kind is in the kindlist.
     fn locate(&self, kind: &Kind) -> bool;
 }
@@ -37,6 +29,30 @@ impl Kind {
 
     pub unsafe fn from_raw(raw: UdbKind) -> Self {
         Kind { raw: raw as i32 }
+    }
+
+    /// Scheme of UdbKindList:
+    /// *const (length: i64, kinds: *const [i32; length]); length right shifted on 0x20 (length >> 0x20).
+    /// TODO Expect error on 32bit machines.
+    unsafe fn from_raw_list(raw: UdbKindList) -> Vec<Kind> {
+        let mut kinds: Vec<Kind> = vec!();
+        if raw.is_null() { return kinds }
+        let raw_ptr: *const i64 = mem::transmute(raw);
+        let len: i64 = ptr::read(raw_ptr) >> 0x20;
+        let raw_arr = ptr::read(raw_ptr.offset(1)) as *const i32;
+        for i in 0..len {
+            let raw_kind = ptr::read(raw_arr.offset(i as isize));
+            kinds.push(Kind::from_raw(raw_kind));
+        }
+        udbKindListFree(raw);
+        kinds
+    }
+
+    /// Parse the kind text.
+    pub fn parse(text: &str) -> Vec<Kind> {
+        unsafe {
+             Kind::from_raw_list(udbKindParse(CString::new(text).unwrap().as_ptr()))
+        }
     }
 
     /// Return the long name of kind as String.
@@ -129,24 +145,6 @@ impl Kind {
 }
 
 impl KindList for Vec<Kind> {
-
-    unsafe fn from_raw(&mut self, raw: UdbKindList) {
-        if raw.is_null() { return }
-        let raw_ptr: *const i64 = mem::transmute(raw);
-        let len: i64 = ptr::read(raw_ptr) >> 0x20;
-        let raw_arr = ptr::read(raw_ptr.offset(1)) as *const i32;
-        for i in 0..len {
-            let raw_kind = ptr::read(raw_arr.offset(i as isize));
-            self.push(Kind::from_raw(raw_kind));
-        }
-        udbKindListFree(raw);
-    }
-
-    fn parse(&mut self, text: &str) {
-        unsafe {
-            self.from_raw(udbKindParse(CString::new(text).unwrap().as_ptr()));
-        }
-    }
 
     fn locate(&self, kind: &Kind) -> bool {
         for k in self {
