@@ -179,7 +179,7 @@ impl<'refs> fmt::Debug for Reference<'refs> {
                 scope=self.scope().name_short(),
                 line=self.line(),
                 column=self.column(),
-                kind=self.kind().name_short(),
+                kind=self.kind().name_long(),
                 file=self.file().name_long())
     }
 }
