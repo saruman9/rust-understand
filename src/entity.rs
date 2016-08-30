@@ -5,6 +5,7 @@ extern crate time;
 
 use std::ffi::{CStr, CString};
 use std::mem;
+use std::ptr;
 use std::fmt;
 use std::marker::PhantomData;
 use std::ops::Range;
@@ -77,7 +78,7 @@ impl<'db> ListEntity<'db> {
     }
 
     /// Filter the specified list of entities, using the kinds specified, and return a new Vec.
-    pub fn filter_by_kind(&self, kinds: Vec<Kind>) -> Vec<Entity> {
+    pub fn filter_by_kinds(&self, kinds: Vec<Kind>) -> Vec<Entity> {
         let mut ents: Vec<Entity> = vec!();
         for entity in self {
             if kinds.locate(&entity.kind()) {
@@ -86,14 +87,6 @@ impl<'db> ListEntity<'db> {
         }
         ents
     }
-
-    /*
-    // Return true if the specified entity has any reference of the general kind
-    // specified by the list of references. Return true if the list is 0. Kindlist
-    // must be allocated and will be deleted.
-    pub fn udbLookupReferenceExists(entity   : UdbEntity,
-                                    kindlist : UdbKindList) -> c_int;
-    */
 }
 
 impl<'ents> Entity<'ents> {
@@ -146,9 +139,7 @@ impl<'ents> Entity<'ents> {
 
     /// Return the absolute name for file entity as string.
     pub fn name_absolute(&self) -> Option<String> {
-        let mut file_kinds: Vec<Kind> = vec!();
-        file_kinds.parse("File");
-        if file_kinds.locate(&self.kind()) {
+        if self.kind().is_file() {
             unsafe {
                 Some(CStr::from_ptr(udbEntityNameAbsolute(self.raw)).to_string_lossy().into_owned())
             }
@@ -157,9 +148,7 @@ impl<'ents> Entity<'ents> {
 
     /// Return the relative name for file entity as string.
     pub fn name_relative(&self) -> Option<String> {
-        let mut file_kinds: Vec<Kind> = vec!();
-        file_kinds.parse("File");
-        if file_kinds.locate(&self.kind()) {
+        if self.kind().is_file() {
             unsafe {
                 Some(CStr::from_ptr(udbEntityNameRelative(self.raw)).to_string_lossy().into_owned())
             }
@@ -220,18 +209,58 @@ impl<'ents> Entity<'ents> {
             Kind::from_raw(udbEntityKind(self.raw))
         }
     }
-    /*
-    /// Return an allocated list of all references within file.
-    pub fn get_references_file(&self) -> Option<ListReference> {
+
+    /// Return true if the specified entity has any reference of the general kind specified by the
+    /// list of references. Return true if the kind list is empty.
+    pub fn locate_kinds_of_ref(&self, kinds: Vec<Kind>) -> bool {
+        let refs: ListReference = self.references();
+        for reference in &refs {
+            if kinds.locate(&reference.kind()) { return true }
+        }
+        false
+    }
+
+    /// Return an list of all references within file. If entity is not file than return empty
+    /// ListReference.
+    pub fn references_file(&self) -> ListReference {
         unsafe {
             let mut udb_list_refs: *mut UdbReference = mem::uninitialized();
-            let mut udb_count_refs: i32 = 0;
+            let mut udb_count_refs: i32 = mem::uninitialized();
 
             udbListReferenceFile(self.raw, &mut udb_list_refs, &mut udb_count_refs);
-
-            Reference::from_raw_list_refs(udb_list_refs, udb_count_refs)
+            ListReference::from_raw(udb_list_refs, udb_count_refs)
         }
     }
+
+    /// Return an list of references, using the refkinds and/or the entkinds specified. Set unique
+    /// to true to return only the first matching reference to each unique entity. Set to false
+    /// otherwise.
+    /// TODO Rewrite on Rust for much speed?
+    pub fn references_with_filter(&self,
+                                  refkinds: &str,
+                                  entkinds: &str,
+                                  unique: bool) -> ListReference {
+        unsafe {
+            let mut udb_list_refs: *mut UdbReference = mem::uninitialized();
+            let refkinds_raw = if refkinds.is_empty() { ptr::null() } else {
+                CString::new(refkinds).unwrap().as_ptr()
+            };
+            let entkinds_raw = if entkinds.is_empty() { ptr::null() } else {
+                CString::new(entkinds).unwrap().as_ptr()
+            };
+            let unique_raw: i32 = if unique { 1 } else { 0 };
+            debug!("refkinds: {:?}; entkinds: {:?}, unique: {}", refkinds_raw, entkinds_raw, unique_raw);
+
+            let udb_count_refs: i32 = udbEntityRefs(self.raw,
+                                                    refkinds_raw,
+                                                    entkinds_raw,
+                                                    unique_raw,
+                                                    &mut udb_list_refs);
+            ListReference::from_raw(udb_list_refs, udb_count_refs)
+        }
+    }
+
+    /*
     /// Return a vec of references, using the refkinds and/or the entkinds specified.
     pub fn get_references_with_filter(&self,
                                       refkinds: &str,
@@ -326,6 +355,7 @@ name_simple: {n_simple}\n\
 name_short: {n_short}\n\
 name_relative: {n_relative}\n\
 name_absolute: {n_absolute}\n\
+kind: {kind}\n\
 library: {lib}\n\
 language: {lang}\n\
 value: {val}\n\
@@ -340,6 +370,7 @@ cgraph: {freetext}\n\
                n_short=self.name_short(),
                n_relative=self.name_relative().unwrap_or_default(),
                n_absolute=self.name_absolute().unwrap_or_default(),
+               kind=self.kind().name_long(),
                lang=self.language().unwrap_or_default(),
                lib=self.library(),
                val=self.value(),
