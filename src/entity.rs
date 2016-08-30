@@ -75,6 +75,24 @@ impl<'db> ListEntity<'db> {
             ents: self,
         }
     }
+
+    /*
+    // Filter the specified list of entities, using the kinds specified, and return
+    // a new allocated array. Use udbListEntityFree() to free this list. The
+    // original list of entities and the kindlist must both be allocated and will
+    // be freed by this call.
+    pub fn filter_kind(&self, kinds: Vec<Kind>) -> Vec<Kind>
+    pub fn udbListEntityFilter(ents    : *mut UdbEntity,
+                               kinds   : UdbKindList,
+                               newents : *mut *mut UdbEntity,
+                               items   : *mut c_int);
+
+    // Return true if the specified entity has any reference of the general kind
+    // specified by the list of references. Return true if the list is 0. Kindlist
+    // must be allocated and will be deleted.
+    pub fn udbLookupReferenceExists(entity   : UdbEntity,
+                                    kindlist : UdbKindList) -> c_int;
+    */
 }
 
 impl<'ents> Entity<'ents> {

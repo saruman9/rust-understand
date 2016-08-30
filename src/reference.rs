@@ -68,6 +68,21 @@ impl<'db> ListReference<'db> {
             refs: self,
         }
     }
+
+    /*
+    // Filter the specified list of references, using the refkinds and/or the
+    // entkinds specified, and return a new allocated array. If unique is
+    // specified, the newrefs array will only contain the first reference for
+    // each unique entity. Refkinds and Entkinds must both be allocated and
+    // will be freed by this call.
+    pub fn udbListReferenceFilter(refs     : *mut UdbReference,
+                                  refkinds : UdbKindList,
+                                  entkinds : UdbKindList,
+                                  unique   : c_int,
+                                  refs     : *mut *mut UdbReference,
+                                  num      : *mut c_int);
+    */
+
 }
 
 impl<'refs> Reference<'refs> {
