@@ -19,7 +19,7 @@ use db::Db;
 use language::Language;
 use library::Library;
 use reference::{Reference, ListReference};
-use kind::Kind;
+use kind::{Kind, KindList};
 
 
 /// Structure of Entity.
@@ -76,17 +76,18 @@ impl<'db> ListEntity<'db> {
         }
     }
 
-    /*
-    // Filter the specified list of entities, using the kinds specified, and return
-    // a new allocated array. Use udbListEntityFree() to free this list. The
-    // original list of entities and the kindlist must both be allocated and will
-    // be freed by this call.
-    pub fn filter_kind(&self, kinds: Vec<Kind>) -> Vec<Kind>
-    pub fn udbListEntityFilter(ents    : *mut UdbEntity,
-                               kinds   : UdbKindList,
-                               newents : *mut *mut UdbEntity,
-                               items   : *mut c_int);
+    /// Filter the specified list of entities, using the kinds specified, and return a new Vec.
+    pub fn filter_by_kind(&self, kinds: Vec<Kind>) -> Vec<Entity> {
+        let mut ents: Vec<Entity> = vec!();
+        for entity in self {
+            if kinds.locate(&entity.kind()) {
+                ents.push(entity);
+            }
+        }
+        ents
+    }
 
+    /*
     // Return true if the specified entity has any reference of the general kind
     // specified by the list of references. Return true if the list is 0. Kindlist
     // must be allocated and will be deleted.
@@ -143,16 +144,26 @@ impl<'ents> Entity<'ents> {
         }
     }
 
-    /// Return the absolute name for file entity as string. May be error - segmentation fault.
-    pub unsafe fn name_absolute(&self) -> String {
-        CStr::from_ptr(udbEntityNameAbsolute(self.raw)).to_string_lossy().into_owned()
+    /// Return the absolute name for file entity as string.
+    pub fn name_absolute(&self) -> Option<String> {
+        let mut file_kinds: Vec<Kind> = vec!();
+        file_kinds.parse("File");
+        if file_kinds.locate(&self.kind()) {
+            unsafe {
+                Some(CStr::from_ptr(udbEntityNameAbsolute(self.raw)).to_string_lossy().into_owned())
+            }
+        } else { None }
     }
 
     /// Return the relative name for file entity as string.
-    pub fn name_relative(&self) -> String {
-        unsafe {
-            CStr::from_ptr(udbEntityNameRelative(self.raw)).to_string_lossy().into_owned()
-        }
+    pub fn name_relative(&self) -> Option<String> {
+        let mut file_kinds: Vec<Kind> = vec!();
+        file_kinds.parse("File");
+        if file_kinds.locate(&self.kind()) {
+            unsafe {
+                Some(CStr::from_ptr(udbEntityNameRelative(self.raw)).to_string_lossy().into_owned())
+            }
+        } else { None }
     }
 
     /// Return the entity language.
@@ -314,6 +325,7 @@ name_long: {n_long}\n\
 name_simple: {n_simple}\n\
 name_short: {n_short}\n\
 name_relative: {n_relative}\n\
+name_absolute: {n_absolute}\n\
 library: {lib}\n\
 language: {lang}\n\
 value: {val}\n\
@@ -326,7 +338,8 @@ cgraph: {freetext}\n\
                n_long=self.name_long(),
                n_simple=self.name_simple(),
                n_short=self.name_short(),
-               n_relative=self.name_relative(),
+               n_relative=self.name_relative().unwrap_or_default(),
+               n_absolute=self.name_absolute().unwrap_or_default(),
                lang=self.language().unwrap_or_default(),
                lib=self.library(),
                val=self.value(),
@@ -339,7 +352,7 @@ impl<'ents> fmt::Display for Entity<'ents> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}\n\t{}",
                self.name_long(),
-               self.language().unwrap_or_default())
+               self.kind())
     }
 }
 
