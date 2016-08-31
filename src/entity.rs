@@ -57,6 +57,11 @@ impl<'db> ListEntity<'db> {
         }
     }
 
+    /// Return raw pointer to UdbEntity.
+    pub unsafe fn raw(&self) -> *mut UdbEntity {
+        self.raw
+    }
+
     /// Gets the number of entities that exist in the ListEntity.
     pub fn len(&self) -> usize { self.len }
 
@@ -236,17 +241,18 @@ impl<'ents> Entity<'ents> {
     /// to true to return only the first matching reference to each unique entity. Set to false
     /// otherwise.
     /// TODO Rewrite on Rust for much speed?
+    /// !!! Don't work udbEntityRefs or I'm stupid.
     pub fn references_with_filter(&self,
-                                  refkinds: &str,
-                                  entkinds: &str,
+                                  refkinds: Option<&str>,
+                                  entkinds: Option<&str>,
                                   unique: bool) -> ListReference {
         unsafe {
             let mut udb_list_refs: *mut UdbReference = mem::uninitialized();
-            let refkinds_raw = if refkinds.is_empty() { ptr::null() } else {
-                CString::new(refkinds).unwrap().as_ptr()
+            let refkinds_raw = if refkinds.is_none() { ptr::null() } else {
+                CString::new(refkinds.unwrap()).unwrap().as_ptr()
             };
-            let entkinds_raw = if entkinds.is_empty() { ptr::null() } else {
-                CString::new(entkinds).unwrap().as_ptr()
+            let entkinds_raw = if entkinds.is_none() { ptr::null() } else {
+                CString::new(entkinds.unwrap()).unwrap().as_ptr()
             };
             let unique_raw: i32 = if unique { 1 } else { 0 };
             debug!("refkinds: {:?}; entkinds: {:?}, unique: {}", refkinds_raw, entkinds_raw, unique_raw);
@@ -259,52 +265,6 @@ impl<'ents> Entity<'ents> {
             ListReference::from_raw(udb_list_refs, udb_count_refs)
         }
     }
-
-    /*
-    /// Return a vec of references, using the refkinds and/or the entkinds specified.
-    pub fn get_references_with_filter(&self,
-                                      refkinds: &str,
-                                      entkinds: &str,
-                                      unique: i32) -> Option<ListReference> {
-        let list_refs: Option<ListReference>;
-
-        unsafe {
-            let mut udb_list_refs: *mut UdbReference = mem::uninitialized();
-
-            let refkinds_raw = CString::new(refkinds).unwrap().as_ptr();
-            let entkinds_raw = CString::new(entkinds).unwrap().as_ptr();
-
-            let udb_count_refs: i32 = udbEntityRefs(self.raw,
-                                                    refkinds_raw,
-                                                    entkinds_raw,
-                                                    unique,
-                                                    &mut udb_list_refs);
-            list_refs = Reference::from_raw_list_refs(udb_list_refs, udb_count_refs);
-        }
-        list_refs
-    }
-    pub fn from_raw_entity(entity: UdbEntity) -> Self {
-            Entity{ raw: entity }
-    }
-    pub fn from_raw_list_ents(udb_list_ents: *mut UdbEntity, udb_count_ents: i32)
-                              -> Option<ListEntity> {
-        let mut ret: Vec<Entity> = vec!();
-        unsafe {
-            for i in 0..udb_count_ents {
-                let entity: UdbEntity = *udb_list_ents.offset(i as isize);
-                ret.push(Entity::from_raw_entity(entity));
-            }
-        }
-        match ret.is_empty() {
-            false => Some(ListEntity {
-                raw: udb_list_ents,
-                list: ret,
-                old: false,
-            }),
-            true => None,
-        }
-    }
-    */
 }
 
 impl<'ents, 'iter> IntoIterator for &'iter ListEntity<'ents> {
