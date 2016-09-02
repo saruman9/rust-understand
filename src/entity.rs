@@ -8,7 +8,7 @@ use std::mem;
 use std::ptr;
 use std::fmt;
 use std::marker::PhantomData;
-use std::ops::Range;
+use std::ops::{Range, Deref, DerefMut};
 
 use understand_sys::{UdbReference, UdbEntity, UdbLibrary, udbListEntityFree, udbEntityId,
 udbEntityNameUnique, udbEntityNameLong, udbEntityNameSimple, udbEntityNameShort, udbEntityKind,
@@ -295,6 +295,24 @@ impl<'ents> Iterator for EntityIter<'ents> {
 impl<'ents> DoubleEndedIterator for EntityIter<'ents> {
     fn next_back(&mut self) -> Option<Entity<'ents>> {
         self.range.next_back().and_then(|i| self.ents.get_index(i))
+    }
+}
+
+impl<'db> Deref for ListEntity<'db> {
+    type Target = [UdbEntity];
+
+    fn deref(&self) -> &Self::Target {
+        unsafe {
+            ::std::slice::from_raw_parts(self.raw, self.len)
+        }
+    }
+}
+
+impl<'db> DerefMut for ListEntity<'db> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        unsafe {
+            ::std::slice::from_raw_parts_mut(self.raw, self.len)
+        }
     }
 }
 
