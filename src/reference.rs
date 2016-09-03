@@ -6,9 +6,8 @@ use std::fmt;
 use std::marker::PhantomData;
 use std::ops::Range;
 
-use understand_sys::{UdbReference, UdbEntity, udbReferenceLine, udbReferenceColumn,
-udbReferenceEntity, udbReferenceKind, udbReferenceScope, udbListReferenceFree, udbReferenceFile,
-udbKindInverse};
+use understand_sys::{UdbReference, udbReferenceLine, udbReferenceColumn, udbReferenceEntity,
+udbReferenceKind, udbReferenceScope, udbListReferenceFree, udbReferenceFile};
 
 use db::Db;
 use entity::Entity;
@@ -127,6 +126,11 @@ impl<'refs> Reference<'refs> {
     pub fn kind(&self) -> Kind {
         unsafe{ Kind::from_raw(udbReferenceKind(self.raw)) }
     }
+
+    /// Check reference entity is file?
+    pub fn is_file(&self) -> bool {
+        self.entity().is_file()
+    }
 }
 
 impl<'refs> Iterator for ReferenceIter<'refs> {
@@ -168,11 +172,24 @@ impl<'db> fmt::Debug for ListReference<'db> {
     }
 }
 
+impl<'refs> fmt::Display for Reference<'refs> {
+
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let ref_file = self.file().name_short();
+        let ref_line = self.line();
+        let ref_kind = self.kind().name_long();
+        write!(f, "{file} ({line}) {kind}",
+               file=ref_file,
+               line=ref_line,
+               kind=ref_kind)
+    }
+}
+
 impl<'refs> fmt::Debug for Reference<'refs> {
 
     /// TODO write issue - don't expect lifetimes errors in std::format!()
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{scope} ({line}) {kind}
+        write!(f, "{file} ({line}) {kind}
     kind->longname: {kind}
     ent->name: {ent}
     scope->name: {scope}
