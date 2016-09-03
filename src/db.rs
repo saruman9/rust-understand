@@ -36,7 +36,7 @@ impl Db {
     }
 
     /// Return list of entities.
-    pub fn entities(&self) -> ListEntity {
+    pub fn entities(&self) -> Option<ListEntity> {
         unsafe {
             let mut udb_list_ents: *mut UdbEntity = mem::uninitialized();
             let mut udb_count_ents: i32 = 0;

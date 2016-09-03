@@ -44,17 +44,22 @@ pub struct EntityIter<'ents> {
 
 impl<'db> ListEntity<'db> {
 
-    pub unsafe fn from_raw(raw: *mut UdbEntity, len: i32) -> ListEntity<'db> {
+    /// Create ListEntity from raw - *mut UdbEntity.
+    pub unsafe fn from_raw(raw: *mut UdbEntity, len: i32) -> Option<ListEntity<'db>> {
         debug!("Created ListEntity from {:?} with {} length at {}",
                raw,
                len,
                time::now().strftime("%M:%S.%f").unwrap());
 
-        ListEntity {
-            raw: raw,
-            len: len as usize,
-            _marker: PhantomData,
-        }
+        if len > 0 {
+            Some(
+                ListEntity {
+                    raw: raw,
+                    len: len as usize,
+                    _marker: PhantomData,
+                }
+            )
+        } else { None }
     }
 
     /// Return raw pointer to UdbEntity.
