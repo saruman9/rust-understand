@@ -8,18 +8,17 @@ use std::mem;
 use std::ptr;
 use std::fmt;
 use std::marker::PhantomData;
-use std::ops::{Range, Deref, DerefMut};
+use std::ops::Range;
 
-use understand_sys::{UdbReference, UdbEntity, UdbLibrary, udbListEntityFree, udbEntityId,
-udbEntityNameUnique, udbEntityNameLong, udbEntityNameSimple, udbEntityNameShort, udbEntityKind,
-udbEntityLanguage, udbEntityLibrary, udbEntityTypetext, udbEntityValue, udbEntityFreetext,
-udbListReference, udbEntityNameAbsolute, udbEntityNameRelative, udbEntityRefs,
-udbListReferenceFile};
+use understand_sys::{UdbReference, UdbEntity, udbListEntityFree, udbEntityId, udbEntityNameUnique,
+udbEntityNameLong, udbEntityNameSimple, udbEntityNameShort, udbEntityKind, udbEntityLanguage,
+udbEntityLibrary, udbEntityTypetext, udbEntityValue, udbEntityFreetext, udbListReference,
+udbEntityNameAbsolute, udbEntityNameRelative, udbEntityRefs, udbListReferenceFile};
 
 use db::Db;
 use language::Language;
 use library::Library;
-use reference::{Reference, ListReference};
+use reference::ListReference;
 use kind::{Kind, KindList};
 
 
@@ -79,7 +78,7 @@ impl<'db> ListEntity<'db> {
         }
     }
 
-    /// Returns an iterator over the Entity in list of entities
+    /// Return an iterator over the Entity in list of entities
     pub fn iter(&self) -> EntityIter {
         EntityIter {
             range: 0..self.len(),
@@ -89,18 +88,13 @@ impl<'db> ListEntity<'db> {
 
     /// Filter the specified list of entities, using the kinds specified, and return a new Vec.
     pub fn filter_by_kinds(&self, kinds: Vec<Kind>) -> Vec<Entity> {
-        let mut ents: Vec<Entity> = vec!();
-        for entity in self {
-            if kinds.locate(&entity.kind()) {
-                ents.push(entity);
-            }
-        }
-        ents
+        self.iter().filter(|ent| kinds.locate(ent.kind())).collect()
     }
 }
 
 impl<'ents> Entity<'ents> {
 
+    /// Create Entity from raw - UdbEntity.
     pub unsafe fn from_raw(raw: UdbEntity) -> Entity<'ents> {
         debug!("Created Entity from {:?} at {}",
                raw,
@@ -272,15 +266,6 @@ impl<'ents> Entity<'ents> {
     }
 }
 
-impl<'ents, 'iter> IntoIterator for &'iter ListEntity<'ents> {
-    type Item = Entity<'iter>;
-    type IntoIter = EntityIter<'iter>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.iter()
-    }
-}
-
 impl<'ents> Iterator for EntityIter<'ents> {
     type Item = Entity<'ents>;
 
@@ -297,27 +282,18 @@ impl<'ents> Iterator for EntityIter<'ents> {
     }
 }
 
+impl<'ents, 'iter> IntoIterator for &'iter ListEntity<'ents> {
+    type Item = Entity<'iter>;
+    type IntoIter = EntityIter<'iter>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
 impl<'ents> DoubleEndedIterator for EntityIter<'ents> {
     fn next_back(&mut self) -> Option<Entity<'ents>> {
         self.range.next_back().and_then(|i| self.ents.get_index(i))
-    }
-}
-
-impl<'db> Deref for ListEntity<'db> {
-    type Target = [UdbEntity];
-
-    fn deref(&self) -> &Self::Target {
-        unsafe {
-            ::std::slice::from_raw_parts(self.raw, self.len)
-        }
-    }
-}
-
-impl<'db> DerefMut for ListEntity<'db> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        unsafe {
-            ::std::slice::from_raw_parts_mut(self.raw, self.len)
-        }
     }
 }
 
@@ -364,7 +340,7 @@ cgraph: {freetext}\n\
 
 impl<'ents> fmt::Display for Entity<'ents> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}\n\t{}",
+        write!(f, "{} - {}",
                self.name_long(),
                self.kind())
     }
