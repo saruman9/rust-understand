@@ -35,17 +35,21 @@ pub struct ReferenceIter<'refs> {
 
 impl<'db> ListReference<'db> {
 
-    pub unsafe fn from_raw(raw: *mut UdbReference, len: i32) -> ListReference<'db> {
+    pub unsafe fn from_raw(raw: *mut UdbReference, len: i32) -> Option<ListReference<'db>> {
         debug!("Created ListReference from {:?} with {} length at {}",
                raw,
                len,
                time::now().strftime("%M:%S.%f").unwrap());
 
-        ListReference {
-            raw: raw,
-            len: len as usize,
-            _marker: PhantomData,
-        }
+        if len > 0 {
+            Some(
+                ListReference {
+                    raw: raw,
+                    len: len as usize,
+                    _marker: PhantomData,
+                }
+            )
+        } else { None }
     }
 
     /// Gets the number of references that exist in the ListReference.

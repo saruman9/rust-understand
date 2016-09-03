@@ -197,7 +197,7 @@ impl<'ents> Entity<'ents> {
     }
 
     /// Return a list of Reference.
-    pub fn references(&self) -> ListReference {
+    pub fn references(&self) -> Option<ListReference> {
         unsafe {
             let mut udb_list_refs: *mut UdbReference = mem::uninitialized();
             let mut udb_count_refs: i32 = 0;
@@ -214,19 +214,22 @@ impl<'ents> Entity<'ents> {
         }
     }
 
+    /// Check entity is file?
+    pub fn is_file(&self) -> bool {
+        self.kind().is_file()
+    }
+
     /// Return true if the specified entity has any reference of the general kind specified by the
     /// list of references. Return true if the kind list is empty.
     pub fn locate_kinds_of_ref(&self, kinds: Vec<Kind>) -> bool {
-        let refs: ListReference = self.references();
-        for reference in &refs {
-            if kinds.locate(&reference.kind()) { return true }
-        }
-        false
+        if let Some(refs) = self.references() {
+            refs.iter().any(|reference| kinds.locate(reference.kind()))
+        } else { false }
     }
 
     /// Return an list of all references within file. If entity is not file than return empty
     /// ListReference.
-    pub fn references_file(&self) -> ListReference {
+    pub fn references_file(&self) -> Option<ListReference> {
         unsafe {
             let mut udb_list_refs: *mut UdbReference = mem::uninitialized();
             let mut udb_count_refs: i32 = mem::uninitialized();
@@ -244,7 +247,7 @@ impl<'ents> Entity<'ents> {
     pub fn references_with_filter(&self,
                                   refkinds: Option<&str>,
                                   entkinds: Option<&str>,
-                                  unique: bool) -> ListReference {
+                                  unique: bool) -> Option<ListReference> {
         unsafe {
             let mut udb_list_refs: *mut UdbReference = mem::uninitialized();
             let refkinds_raw = if refkinds.is_none() { ptr::null() } else {
