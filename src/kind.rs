@@ -8,13 +8,13 @@ use std::ptr;
 use std::fmt;
 
 use understand_sys::{UdbKind, UdbKindList, udbKindLongname, udbKindShortname, udbIsKindFile,
-udbKindLanguage, udbIsKind, udbKindInverse, udbKindList, udbListKindEntity, udbListKindFree,
+udbKindLanguage, udbIsKind, udbKindInverse, udbListKindEntity, udbListKindFree,
 udbListKindReference, udbKindParse, udbKindListFree};
 
 use language::Language;
 
 /// Structure of Kind.
-#[derive(Debug, PartialEq)]
+#[derive(Debug)]
 pub struct Kind {
     raw: i32,
 }
@@ -22,7 +22,7 @@ pub struct Kind {
 pub trait KindList {
 
     /// Return true if kind is in the kindlist.
-    fn locate(&self, kind: &Kind) -> bool;
+    fn locate(&self, kind: Kind) -> bool;
 }
 
 impl Kind {
@@ -146,9 +146,9 @@ impl Kind {
 
 impl KindList for Vec<Kind> {
 
-    fn locate(&self, kind: &Kind) -> bool {
+    fn locate(&self, kind: Kind) -> bool {
         for k in self {
-            if k == kind { return true }
+            if k.raw == kind.raw { return true }
         }
         false
     }
