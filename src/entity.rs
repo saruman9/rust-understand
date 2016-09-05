@@ -8,7 +8,7 @@ use std::mem;
 use std::ptr;
 use std::fmt;
 use std::marker::PhantomData;
-use std::ops::Range;
+use std::ops::{DerefMut, Deref, Range};
 
 use understand_sys::{UdbReference, UdbEntity, udbListEntityFree, udbEntityId, udbEntityNameUnique,
 udbEntityNameLong, udbEntityNameSimple, udbEntityNameShort, udbEntityKind, udbEntityLanguage,
@@ -257,7 +257,6 @@ impl<'ents> Entity<'ents> {
                 CString::new(entkinds.unwrap()).unwrap().as_ptr()
             };
             let unique_raw: i32 = if unique { 1 } else { 0 };
-            debug!("refkinds: {:?}; entkinds: {:?}, unique: {}", refkinds_raw, entkinds_raw, unique_raw);
 
             let udb_count_refs: i32 = udbEntityRefs(self.raw,
                                                     refkinds_raw,
@@ -297,6 +296,24 @@ impl<'ents, 'iter> IntoIterator for &'iter ListEntity<'ents> {
 impl<'ents> DoubleEndedIterator for EntityIter<'ents> {
     fn next_back(&mut self) -> Option<Entity<'ents>> {
         self.range.next_back().and_then(|i| self.ents.get_index(i))
+    }
+}
+
+impl<'db> Deref for ListEntity<'db> {
+    type Target = [Entity<'db>];
+
+    fn deref(&self) -> &Self::Target {
+        unsafe {
+            mem::transmute(::std::slice::from_raw_parts(self.raw, self.len))
+        }
+    }
+}
+
+impl<'db> DerefMut for ListEntity<'db> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        unsafe {
+            mem::transmute(::std::slice::from_raw_parts_mut(self.raw, self.len))
+        }
     }
 }
 
