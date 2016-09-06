@@ -7,7 +7,7 @@ use std::marker::PhantomData;
 use std::ops::Range;
 
 use understand_sys::{UdbReference, udbReferenceLine, udbReferenceColumn, udbReferenceEntity,
-udbReferenceKind, udbReferenceScope, udbListReferenceFree, udbReferenceFile};
+                     udbReferenceKind, udbReferenceScope, udbListReferenceFree, udbReferenceFile};
 
 use db::Db;
 use entity::Entity;
@@ -33,7 +33,6 @@ pub struct ReferenceIter<'refs> {
 }
 
 impl<'db> ListReference<'db> {
-
     pub unsafe fn from_raw(raw: *mut UdbReference, len: i32) -> Option<ListReference<'db>> {
         debug!("Created ListReference from {:?} with {} length at {}",
                raw,
@@ -41,20 +40,22 @@ impl<'db> ListReference<'db> {
                time::now().strftime("%M:%S.%f").unwrap());
 
         if len > 0 {
-            Some(
-                ListReference {
-                    raw: raw,
-                    len: len as usize,
-                    _marker: PhantomData,
-                }
-            )
-        } else { None }
+            Some(ListReference {
+                raw: raw,
+                len: len as usize,
+                _marker: PhantomData,
+            })
+        } else {
+            None
+        }
     }
 
     /// Gets the number of references that exist in the ListReference.
-    pub fn len(&self) -> usize { self.len }
+    pub fn len(&self) -> usize {
+        self.len
+    }
 
-    ///Gets the Reference at the given index.
+    /// Gets the Reference at the given index.
     pub fn get_index(&self, index: usize) -> Option<Reference> {
         unsafe {
             if index < self.len {
@@ -72,24 +73,20 @@ impl<'db> ListReference<'db> {
         }
     }
 
-    /*
-    // Filter the specified list of references, using the refkinds and/or the
-    // entkinds specified, and return a new allocated array. If unique is
-    // specified, the newrefs array will only contain the first reference for
-    // each unique entity. Refkinds and Entkinds must both be allocated and
-    // will be freed by this call.
-    pub fn udbListReferenceFilter(refs     : *mut UdbReference,
-                                  refkinds : UdbKindList,
-                                  entkinds : UdbKindList,
-                                  unique   : c_int,
-                                  refs     : *mut *mut UdbReference,
-                                  num      : *mut c_int);
-    */
-
+    // // Filter the specified list of references, using the refkinds and/or the
+    // // entkinds specified, and return a new allocated array. If unique is
+    // // specified, the newrefs array will only contain the first reference for
+    // // each unique entity. Refkinds and Entkinds must both be allocated and
+    // // will be freed by this call.
+    // pub fn udbListReferenceFilter(refs     : *mut UdbReference,
+    //                               refkinds : UdbKindList,
+    //                               entkinds : UdbKindList,
+    //                               unique   : c_int,
+    //                               refs     : *mut *mut UdbReference,
+    //                               num      : *mut c_int);
 }
 
 impl<'refs> Reference<'refs> {
-
     unsafe fn from_raw(raw: UdbReference) -> Reference<'refs> {
         debug!("Created Reference from {:?} at {}",
                raw,
@@ -103,11 +100,11 @@ impl<'refs> Reference<'refs> {
 
     /// Return reference line.
     pub fn line(&self) -> i32 {
-        unsafe{ udbReferenceLine(self.raw) as i32 }
+        unsafe { udbReferenceLine(self.raw) as i32 }
     }
     /// Return reference column.
     pub fn column(&self) -> i32 {
-        unsafe{ udbReferenceColumn(self.raw) as i32 }
+        unsafe { udbReferenceColumn(self.raw) as i32 }
     }
     /// Return reference entity.
     pub fn entity(&self) -> Entity {
@@ -124,7 +121,7 @@ impl<'refs> Reference<'refs> {
 
     /// Return reference kind.
     pub fn kind(&self) -> Kind {
-        unsafe{ Kind::from_raw(udbReferenceKind(self.raw)) }
+        unsafe { Kind::from_raw(udbReferenceKind(self.raw)) }
     }
 
     /// Check reference entity is file?
@@ -159,7 +156,6 @@ impl<'refs, 'iter> IntoIterator for &'iter ListReference<'refs> {
 }
 
 impl<'refs> DoubleEndedIterator for ReferenceIter<'refs> {
-
     fn next_back(&mut self) -> Option<Reference<'refs>> {
         self.range.next_back().and_then(|i| self.refs.get_index(i))
     }
@@ -167,41 +163,42 @@ impl<'refs> DoubleEndedIterator for ReferenceIter<'refs> {
 
 impl<'db> fmt::Debug for ListReference<'db> {
 
+impl<'db> fmt::Debug for ListReference<'db> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{:?}:{}", self.raw, self.len)
     }
 }
 
 impl<'refs> fmt::Display for Reference<'refs> {
-
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let ref_file = self.file().name_short();
         let ref_line = self.line();
         let ref_kind = self.kind().name_long();
-        write!(f, "{file} ({line}) {kind}",
-               file=ref_file,
-               line=ref_line,
-               kind=ref_kind)
+        write!(f,
+               "{file} ({line}) {kind}",
+               file = ref_file,
+               line = ref_line,
+               kind = ref_kind)
     }
 }
 
 impl<'refs> fmt::Debug for Reference<'refs> {
-
     /// TODO write issue - don't expect lifetimes errors in std::format!()
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{file} ({line}) {kind}
+        write!(f,
+               r"{file} ({line}) {kind}
     kind->longname: {kind}
     ent->name: {ent}
     scope->name: {scope}
     file->longname: {file}
     line: {line}
     column: {column}",
-                ent=self.entity().name_short(),
-                scope=self.scope().name_short(),
-                line=self.line(),
-                column=self.column(),
-                kind=self.kind().name_long(),
-                file=self.file().name_long())
+               ent = self.entity().name_short(),
+               scope = self.scope().name_short(),
+               line = self.line(),
+               column = self.column(),
+               kind = self.kind().name_long(),
+               file = self.file().name_long())
     }
 }
 
@@ -215,22 +212,20 @@ impl<'db> Drop for ListReference<'db> {
     }
 }
 
-/*
-    // Return an allocated copy of reference.
-    pub fn udbReferenceCopy(reference: UdbReference) -> UdbReference;
+// // Return an allocated copy of reference.
+// pub fn udbReferenceCopy(reference: UdbReference) -> UdbReference;
 
-    // Free reference copied by udbReferenceCopy().
-    pub fn udbReferenceCopyFree(reference: UdbReference);
+// // Free reference copied by udbReferenceCopy().
+// pub fn udbReferenceCopyFree(reference: UdbReference);
 
-    // Filter the specified list of references, using the refkinds and/or the
-    // entkinds specified, and return a new allocated array. If unique is
-    // specified, the newrefs array will only contain the first reference for
-    // each unique entity. Refkinds and Entkinds must both be allocated and
-    // will be freed by this call.
-    pub fn udbListReferenceFilter(refs     : *mut UdbReference,
-                                  refkinds : UdbKindList,
-                                  entkinds : UdbKindList,
-                                  unique   : c_int,
-                                  refs     : *mut *mut UdbReference,
-                                  num      : *mut c_int);
-*/
+// // Filter the specified list of references, using the refkinds and/or the
+// // entkinds specified, and return a new allocated array. If unique is
+// // specified, the newrefs array will only contain the first reference for
+// // each unique entity. Refkinds and Entkinds must both be allocated and
+// // will be freed by this call.
+// pub fn udbListReferenceFilter(refs     : *mut UdbReference,
+//                               refkinds : UdbKindList,
+//                               entkinds : UdbKindList,
+//                               unique   : c_int,
+//                               refs     : *mut *mut UdbReference,
+//                               num      : *mut c_int);

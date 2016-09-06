@@ -10,16 +10,13 @@ pub struct Library {
 }
 
 impl Library {
-
     pub unsafe fn from_raw(library: UdbLibrary) -> Self {
         Library { raw: library }
     }
 
     /// Return the library name as a temporary string. Never return NULL.
     pub fn name(&self) -> Option<&str> {
-        unsafe {
-            CStr::from_ptr(udbLibraryName(self.raw)).to_str().ok()
-        }
+        unsafe { CStr::from_ptr(udbLibraryName(self.raw)).to_str().ok() }
     }
 }
 

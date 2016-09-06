@@ -8,8 +8,8 @@ use std::ptr;
 use std::fmt;
 
 use understand_sys::{UdbKind, UdbKindList, udbKindLongname, udbKindShortname, udbIsKindFile,
-udbKindLanguage, udbIsKind, udbKindInverse, udbListKindEntity, udbListKindFree,
-udbListKindReference, udbKindParse, udbKindListFree};
+                     udbKindLanguage, udbIsKind, udbKindInverse, udbListKindEntity,
+                     udbListKindFree, udbListKindReference, udbKindParse, udbKindListFree};
 
 use language::Language;
 
@@ -20,23 +20,24 @@ pub struct Kind {
 }
 
 pub trait KindList {
-
     /// Return true if kind is in the kindlist.
     fn locate(&self, kind: Kind) -> bool;
 }
 
 impl Kind {
-
     pub unsafe fn from_raw(raw: UdbKind) -> Self {
         Kind { raw: raw as i32 }
     }
 
     /// Scheme of UdbKindList:
-    /// *const (length: i64, kinds: *const [i32; length]); length right shifted on 0x20 (length >> 0x20).
+    /// *const (length: i64, kinds: *const [i32; length]);
+    /// length right shifted on 0x20 (length >> 0x20).
     /// TODO Expect error on 32bit machines.
     unsafe fn from_raw_list(raw: UdbKindList) -> Vec<Kind> {
-        let mut kinds: Vec<Kind> = vec!();
-        if raw.is_null() { return kinds }
+        let mut kinds: Vec<Kind> = vec![];
+        if raw.is_null() {
+            return kinds;
+        }
         let raw_ptr: *const i64 = mem::transmute(raw);
         let len: i64 = ptr::read(raw_ptr) >> 0x20;
         let raw_arr = ptr::read(raw_ptr.offset(1)) as *const i32;
@@ -50,35 +51,27 @@ impl Kind {
 
     /// Parse the kind text.
     pub fn parse(text: &str) -> Vec<Kind> {
-        unsafe {
-             Kind::from_raw_list(udbKindParse(CString::new(text).unwrap().as_ptr()))
-        }
+        unsafe { Kind::from_raw_list(udbKindParse(CString::new(text).unwrap().as_ptr())) }
     }
 
     /// Return the long name of kind as String.
     pub fn name_long(&self) -> String {
-        unsafe {
-            CStr::from_ptr(udbKindLongname(self.raw)).to_string_lossy().into_owned()
-        }
+        unsafe { CStr::from_ptr(udbKindLongname(self.raw)).to_string_lossy().into_owned() }
     }
 
     /// Return the short name of kind as String.
     pub fn name_short(&self) -> String {
-        unsafe{
-            CStr::from_ptr(udbKindShortname(self.raw)).to_string_lossy().into_owned()
-        }
+        unsafe { CStr::from_ptr(udbKindShortname(self.raw)).to_string_lossy().into_owned() }
     }
 
     /// Return the language of the kind.
     pub fn language(&self) -> Option<Language> {
-        unsafe{
-            Language::from_raw(udbKindLanguage(self.raw))
-        }
+        unsafe { Language::from_raw(udbKindLanguage(self.raw)) }
     }
 
     /// Return true if the kind refers to a file entity.
     pub fn is_file(&self) -> bool {
-        unsafe{
+        unsafe {
             match udbIsKindFile(self.raw) {
                 0 => false,
                 _ => true,
@@ -101,7 +94,9 @@ impl Kind {
     pub fn inverse(&self) -> Option<Self> {
         unsafe {
             let kind_inv: UdbKind = udbKindInverse(self.raw);
-            if kind_inv == 0 { None } else {
+            if kind_inv == 0 {
+                None
+            } else {
                 Some(Kind::from_raw(kind_inv))
             }
         }
@@ -113,7 +108,7 @@ impl Kind {
             let mut list_kind_raw: *mut UdbKind = mem::uninitialized();
             let mut count_kinds: i32 = mem::uninitialized();
 
-            let mut list_kind: Vec<Kind> = vec!();
+            let mut list_kind: Vec<Kind> = vec![];
 
             udbListKindEntity(&mut list_kind_raw, &mut count_kinds);
             for i in 0..count_kinds {
@@ -131,7 +126,7 @@ impl Kind {
             let mut list_kinds_raw: *mut UdbKind = mem::uninitialized();
             let mut count_kinds: i32 = mem::uninitialized();
 
-            let mut list_kind: Vec<Kind> = vec!();
+            let mut list_kind: Vec<Kind> = vec![];
 
             udbListKindReference(&mut list_kinds_raw, &mut count_kinds);
             for i in 0..count_kinds {
@@ -145,10 +140,11 @@ impl Kind {
 }
 
 impl KindList for Vec<Kind> {
-
     fn locate(&self, kind: Kind) -> bool {
         for k in self {
-            if k.raw == kind.raw { return true }
+            if k.raw == kind.raw {
+                return true;
+            }
         }
         false
     }
