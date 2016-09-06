@@ -325,22 +325,21 @@ impl<'db> fmt::Debug for ListEntity<'db> {
 
 impl<'ents> fmt::Debug for Entity<'ents> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "\
-raw: {raw:?}\n\
-id: {id}\n\
-name_unique: {n_unique}\n\
-name_long: {n_long}\n\
-name_simple: {n_simple}\n\
-name_short: {n_short}\n\
-name_relative: {n_relative}\n\
-name_absolute: {n_absolute}\n\
-kind: {kind}\n\
-library: {lib}\n\
-language: {lang}\n\
-value: {val}\n\
-typetext: {ttext}\n\
-cgraph: {freetext}\n\
-================================================================================",
+        write!(f,
+               r"raw: {raw:?}
+id: {id}
+name_unique: {n_unique}
+name_long: {n_long}
+name_simple: {n_simple}
+name_short: {n_short}
+name_relative: {n_relative}
+name_absolute: {n_absolute}
+kind: {kind}
+library: {lib}
+language: {lang}
+value: {val}
+typetext: {ttext}
+cgraph: {freetext}",
                raw=self.raw,
                id=self.id(),
                n_unique=self.name_unique(),
