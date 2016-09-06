@@ -590,7 +590,7 @@ mod tests {
 
     #[test]
     fn get_info_build() {
-        assert_eq!("833", unsafe { CStr::from_ptr(udbInfoBuild()).to_string_lossy() });
+        assert_eq!("851", unsafe { CStr::from_ptr(udbInfoBuild()).to_string_lossy() });
     }
 
     #[test]
