@@ -4,7 +4,7 @@ extern crate time;
 
 use std::fmt;
 use std::marker::PhantomData;
-use std::ops::Range;
+use std::ops::{Range, Deref, DerefMut};
 
 use understand_sys::{UdbReference, udbReferenceLine, udbReferenceColumn, udbReferenceEntity,
                      udbReferenceKind, udbReferenceScope, udbListReferenceFree, udbReferenceFile};
@@ -161,7 +161,19 @@ impl<'refs> DoubleEndedIterator for ReferenceIter<'refs> {
     }
 }
 
-impl<'db> fmt::Debug for ListReference<'db> {
+impl<'db> Deref for ListReference<'db> {
+    type Target = [Reference<'db>];
+
+    fn deref(&self) -> &Self::Target {
+        unsafe { ::std::slice::from_raw_parts(self.raw as *const Reference, self.len) }
+    }
+}
+
+impl<'db> DerefMut for ListReference<'db> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        unsafe { ::std::slice::from_raw_parts_mut(self.raw as *mut Reference, self.len) }
+    }
+}
 
 impl<'db> fmt::Debug for ListReference<'db> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
