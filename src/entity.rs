@@ -19,7 +19,7 @@ use understand_sys::{UdbReference, UdbEntity, udbListEntityFree, udbEntityId, ud
 use db::Db;
 use language::Language;
 use library::Library;
-use reference::ListReference;
+use reference::{ListReference, Reference};
 use kind::{Kind, KindList};
 
 
@@ -262,6 +262,35 @@ impl<'ents> Entity<'ents> {
             ListReference::from_raw(udb_list_refs, udb_count_refs)
         }
     }
+
+    // pub fn references_filter_rs(&self,
+    //                             refkinds: Option<&str>,
+    //                             entkinds: Option<&str>)
+    //                             -> Option<Vec<Reference>> {
+    //     if let Some(refs) = self.references() {
+
+    //         let mut refs_vec: Vec<Reference> = refs.iter().collect();
+    //         if let Some(refkinds) = refkinds {
+    //             let refkinds = Kind::parse(refkinds);
+    //             refs_vec = refs_vec.into_iter()
+    //                 .filter(|refer| refkinds.locate(refer.kind()))
+    //                 .collect();
+    //         }
+    //         if let Some(entkinds) = entkinds {
+    //             let entkinds = Kind::parse(entkinds);
+    //             refs_vec = refs_vec.into_iter()
+    //                 .filter(|refer| entkinds.locate(refer.kind()))
+    //                 .collect();
+    //         }
+    //         if !refs_vec.is_empty() {
+    //             Some(refs_vec)
+    //         } else {
+    //             None
+    //         }
+    //     } else {
+    //         None
+    //     }
+    // }
 }
 
 impl<'ents> Iterator for EntityIter<'ents> {
