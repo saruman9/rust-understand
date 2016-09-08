@@ -49,31 +49,35 @@ impl Db {
 
     // /// Lookup and return an allocated list of entities by name and kind, if specified.
     // /// !SLOWER! then lookup on Rust
-    // pub fn lookup_entity(&self, name: &str, kind: &str, search_in_shortname: bool)
-    //                      -> Option<ListEntity>{
+    // pub fn lookup_entity(&self,
+    //                      name: &str,
+    //                      kind: &str,
+    //                      search_in_shortname: bool)
+    //                      -> Option<ListEntity> {
     //     unsafe {
     //         let mut udb_list_ents: *mut UdbEntity = mem::uninitialized();
     //         let mut udb_count_ents: i32 = 0;
-
-    //         let search_in_shortname_int = if search_in_shortname { 1 } else { 0 } ;
+    //         let search_in_shortname_int = if search_in_shortname { 1 } else { 0 };
     //         udbLookupEntity(CString::new(name).unwrap().as_ptr(),
     //                         CString::new(kind).unwrap().as_ptr(),
     //                         search_in_shortname_int,
     //                         &mut udb_list_ents,
     //                         &mut udb_count_ents);
-    //         Entity::from_raw_list_ents(udb_list_ents, udb_count_ents)
+    //         ListEntity::from_raw(udb_list_ents, udb_count_ents)
     //     }
     // }
-    // /// Return a temporary list of all analyzed file entities.
-    // pub fn get_files(&self) -> Option<ListEntity> {
-    //     unsafe {
-    //         let mut udb_list_files: *mut UdbEntity = mem::uninitialized();
-    //         let mut udb_count_files: i32 = 0;
 
-    //         udbListFile(&mut udb_list_files, &mut udb_count_files);
-    //         Entity::from_raw_list_ents(udb_list_files, udb_count_files)
-    //     }
-    // }
+    /// Return a temporary list of all analyzed file entities.
+    pub fn files(&self) -> Option<ListEntity> {
+        unsafe {
+            let mut udb_list_files: *mut UdbEntity = mem::uninitialized();
+            let mut udb_count_files: i32 = 0;
+
+            udbListFile(&mut udb_list_files, &mut udb_count_files);
+            ListEntity::from_raw(udb_list_files, udb_count_files)
+        }
+    }
+
     // pub fn lookup_file(&self, needle: &str) -> Option<ListEntity> {
     //     let files: Option<ListEntity> = self.get_files();
     //     files.map(|mut files| {
