@@ -11,7 +11,7 @@ use understand_sys::{UdbEntity, udbDbOpen, udbDbLanguage, udbDbName, udbInfoBuil
 
 use language::Language;
 use errors::StatusError;
-use entity::ListEntity;
+use entity::{Entity, ListEntity};
 
 
 pub struct Db;
@@ -47,25 +47,24 @@ impl Db {
         }
     }
 
-    // /// Lookup and return an allocated list of entities by name and kind, if specified.
-    // /// !SLOWER! then lookup on Rust
-    // pub fn lookup_entity(&self,
-    //                      name: &str,
-    //                      kind: &str,
-    //                      search_in_shortname: bool)
-    //                      -> Option<ListEntity> {
-    //     unsafe {
-    //         let mut udb_list_ents: *mut UdbEntity = mem::uninitialized();
-    //         let mut udb_count_ents: i32 = 0;
-    //         let search_in_shortname_int = if search_in_shortname { 1 } else { 0 };
-    //         udbLookupEntity(CString::new(name).unwrap().as_ptr(),
-    //                         CString::new(kind).unwrap().as_ptr(),
-    //                         search_in_shortname_int,
-    //                         &mut udb_list_ents,
-    //                         &mut udb_count_ents);
-    //         ListEntity::from_raw(udb_list_ents, udb_count_ents)
-    //     }
-    // }
+    /// Lookup and return an allocated list of entities by name and kind, if specified.
+    pub fn lookup_entity(&self,
+                         name: &str,
+                         kind: &str,
+                         search_in_shortname: bool)
+                         -> Option<ListEntity> {
+        unsafe {
+            let mut udb_list_ents: *mut UdbEntity = mem::uninitialized();
+            let mut udb_count_ents: i32 = 0;
+            let search_in_shortname_int = if search_in_shortname { 1 } else { 0 };
+            udbLookupEntity(CString::new(name).unwrap().as_ptr(),
+                            CString::new(kind).unwrap().as_ptr(),
+                            search_in_shortname_int,
+                            &mut udb_list_ents,
+                            &mut udb_count_ents);
+            ListEntity::from_raw(udb_list_ents, udb_count_ents)
+        }
+    }
 
     /// Return a temporary list of all analyzed file entities.
     pub fn files(&self) -> Option<ListEntity> {
@@ -75,6 +74,13 @@ impl Db {
 
             udbListFile(&mut udb_list_files, &mut udb_count_files);
             ListEntity::from_raw(udb_list_files, udb_count_files)
+        }
+    }
+
+    /// Lookup an entity by unique name.
+    pub fn lookup_by_name_unique(uniq_name: &str) -> Entity {
+        unsafe {
+            Entity::from_raw(udbLookupEntityByUniquename(CString::new(uniq_name).unwrap().as_ptr()))
         }
     }
 
@@ -103,14 +109,6 @@ impl Db {
     //         ents.old = true;
     //         ents
     //     })
-    // }
-    // /// Lookup an entity by unique name.
-    // pub fn lookup_by_name_unique(needle: &str) -> Entity {
-    //     unsafe {
-    //         Entity::from_raw_entity(
-    //             udbLookupEntityByUniquename(CString::new(needle).unwrap().as_ptr())
-    //         )
-    //     }
     // }
 
     /// Return vector of languages uses in database.
