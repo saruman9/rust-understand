@@ -19,7 +19,7 @@ use understand_sys::{UdbReference, UdbEntity, udbListEntityFree, udbEntityId, ud
 use db::Db;
 use language::Language;
 use library::Library;
-use reference::{ListReference, Reference};
+use reference::ListReference;
 use kind::{Kind, KindList};
 
 
