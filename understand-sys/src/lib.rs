@@ -75,6 +75,7 @@ pub type UdbMetricKind = UdbMetricKind_;
 
 #[allow(non_camel_case_types)]
 #[repr(u8)]
+#[derive(Copy, Clone)]
 #[derive(Debug)]
 pub enum UdbStatus_ {
     Udb_statusOkay                     = 0,
