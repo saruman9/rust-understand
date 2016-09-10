@@ -135,22 +135,22 @@ impl<'ents> Entity<'ents> {
     }
 
     /// Return the absolute name for file entity as string.
-    pub fn name_absolute(&self) -> Option<String> {
+    /// TODO SIGSEGV sometimes! in for kraken:9e1c726
+    /// use name_long!
+    pub unsafe fn name_absolute(&self) -> Option<String> {
         if self.kind().is_file() {
-            unsafe {
-                Some(CStr::from_ptr(udbEntityNameAbsolute(self.raw)).to_string_lossy().into_owned())
-            }
+            Some(CStr::from_ptr(udbEntityNameAbsolute(self.raw)).to_string_lossy().into_owned())
         } else {
             None
         }
     }
 
     /// Return the relative name for file entity as string.
-    pub fn name_relative(&self) -> Option<String> {
+    /// TODO SIGSEGV sometimes! in for kraken:9e1c726
+    /// use name_long!
+    pub unsafe fn name_relative(&self) -> Option<String> {
         if self.kind().is_file() {
-            unsafe {
-                Some(CStr::from_ptr(udbEntityNameRelative(self.raw)).to_string_lossy().into_owned())
-            }
+            Some(CStr::from_ptr(udbEntityNameRelative(self.raw)).to_string_lossy().into_owned())
         } else {
             None
         }
@@ -367,8 +367,10 @@ cgraph: {freetext}",
                n_long = self.name_long(),
                n_simple = self.name_simple(),
                n_short = self.name_short(),
-               n_relative = self.name_relative().unwrap_or_default(),
-               n_absolute = self.name_absolute().unwrap_or_default(),
+               // n_relative = self.name_relative().unwrap_or_default(),
+               // n_absolute = self.name_absolute().unwrap_or_default(),
+               n_relative = "",
+               n_absolute = "",
                kind = self.kind().name_long(),
                lang = self.language().unwrap_or_default(),
                lib = self.library(),
