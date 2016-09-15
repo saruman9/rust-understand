@@ -5,6 +5,7 @@ use std::fmt;
 use understand_sys::{UdbLanguage_, UdbLanguage};
 
 
+#[derive(PartialEq)]
 pub enum Language {
     NONE,
     ALL,
@@ -75,6 +76,29 @@ impl Language {
         };
         None
     }
+
+    /// Convert Language to string.
+    pub fn to_string(&self) -> String {
+        match *self {
+            Language::NONE => "None".to_string(),
+            Language::ALL => "All".to_string(),
+            Language::Ada => "Ada".to_string(),
+            Language::Asm => "Assembler".to_string(),
+            Language::Basic => "Basic".to_string(),
+            Language::C => "C/C++".to_string(),
+            Language::Cobol => "COBOL".to_string(),
+            Language::CSharp => "C#".to_string(),
+            Language::Fortran => "FORTRAN".to_string(),
+            Language::Java => "Java".to_string(),
+            Language::Jovial => "JOVIAL".to_string(),
+            Language::Pascal => "Pascal".to_string(),
+            Language::Plm => "PL/M".to_string(),
+            Language::Python => "Python".to_string(),
+            Language::Verilog => "Verilog".to_string(),
+            Language::Vhdl => "VHDL".to_string(),
+            Language::Web => "Web".to_string(),
+        }
+    }
 }
 
 impl Default for Language {
@@ -85,24 +109,6 @@ impl Default for Language {
 
 impl fmt::Display for Language {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            Language::NONE => write!(f, "{}", "None"),
-            Language::ALL => write!(f, "{}", "All"),
-            Language::Ada => write!(f, "{}", "Ada"),
-            Language::Asm => write!(f, "{}", "Assembler"),
-            Language::Basic => write!(f, "{}", "Basic"),
-            Language::C => write!(f, "{}", "C/C++"),
-            Language::Cobol => write!(f, "{}", "COBOL"),
-            Language::CSharp => write!(f, "{}", "C#"),
-            Language::Fortran => write!(f, "{}", "FORTRAN"),
-            Language::Java => write!(f, "{}", "Java"),
-            Language::Jovial => write!(f, "{}", "JOVIAL"),
-            Language::Pascal => write!(f, "{}", "Pascal"),
-            Language::Plm => write!(f, "{}", "PL/M"),
-            Language::Python => write!(f, "{}", "Python"),
-            Language::Verilog => write!(f, "{}", "Verilog"),
-            Language::Vhdl => write!(f, "{}", "VHDL"),
-            Language::Web => write!(f, "{}", "Web"),
-        }
+        write!(f, "{}", self.to_string())
     }
 }
