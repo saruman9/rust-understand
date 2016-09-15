@@ -18,6 +18,11 @@ impl Library {
     pub fn name(&self) -> Option<&str> {
         unsafe { CStr::from_ptr(udbLibraryName(self.raw)).to_str().ok() }
     }
+
+    /// Return true if the library is "Standard" and false else.
+    pub fn is_standard(&self) -> bool {
+        self.name().unwrap_or_default() == "Standard"
+    }
 }
 
 impl fmt::Display for Library {
