@@ -5,7 +5,7 @@ use std::fmt;
 use understand_sys::{UdbLanguage_, UdbLanguage};
 
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub enum Language {
     NONE,
     ALL,
