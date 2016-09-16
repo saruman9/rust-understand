@@ -187,6 +187,16 @@ impl<'ents> Entity<'ents> {
         }
     }
 
+    /// Return debug information about linkage(Linkage functions) as string.
+    pub fn linkage(&self) -> String {
+        unsafe {
+            let cgraph_text_raw = CString::new("Linkage").unwrap().as_ptr();
+            CStr::from_ptr(udbEntityFreetext(self.raw, cgraph_text_raw))
+                .to_string_lossy()
+                .into_owned()
+        }
+    }
+
     /// Return a list of Reference.
     pub fn references(&self) -> Option<ListReference> {
         unsafe {
