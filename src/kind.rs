@@ -19,7 +19,7 @@ pub struct Kind {
     raw: i32,
 }
 
-pub trait KindList {
+pub trait KindVec {
     /// Return true if kind is in the kindlist.
     fn locate(&self, kind: Kind) -> bool;
 }
@@ -139,7 +139,7 @@ impl Kind {
     }
 }
 
-impl KindList for Vec<Kind> {
+impl KindVec for Vec<Kind> {
     fn locate(&self, kind: Kind) -> bool {
         for k in self {
             if k.raw == kind.raw {
