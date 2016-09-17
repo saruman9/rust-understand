@@ -9,18 +9,20 @@ use std::ptr;
 use std::fmt;
 use std::marker::PhantomData;
 use std::ops::{DerefMut, Deref, Range};
+use std::os::raw::c_char;
 
 use understand_sys::{UdbReference, UdbEntity, udbListEntityFree, udbEntityId, udbEntityNameUnique,
                      udbEntityNameLong, udbEntityNameSimple, udbEntityNameShort, udbEntityKind,
                      udbEntityLanguage, udbEntityLibrary, udbEntityTypetext, udbEntityValue,
                      udbEntityFreetext, udbListReference, udbEntityNameAbsolute,
-                     udbEntityNameRelative, udbEntityRefs, udbListReferenceFile};
+                     udbEntityNameRelative, udbEntityRefs, udbListReferenceFile,
+                     udbEntityParameters};
 
 use db::Db;
 use language::Language;
 use library::Library;
 use reference::ListReference;
-use kind::{Kind, KindList};
+use kind::{Kind, KindVec};
 
 
 /// Structure of Entity.
@@ -172,28 +174,86 @@ impl<'ents> Entity<'ents> {
         unsafe { CStr::from_ptr(udbEntityValue(self.raw)).to_string_lossy().into_owned() }
     }
 
+    /// Return Some(parameters prototype) if entity can have parameters.
+    /// If showname is specified include the names of the parameters.
+    pub fn parameters(&self, shownames: bool) -> Option<String> {
+        unsafe {
+            let mut parameters: *mut c_char = mem::uninitialized();
+            let shownames_int: i32 = if shownames { 1 } else { 0 };
+            if udbEntityParameters(self.raw, &mut parameters, shownames_int) > 0 {
+                Some(CStr::from_ptr(parameters).to_string_lossy().into_owned())
+            } else {
+                None
+            }
+        }
+    }
+
     /// Return the entity typetext as string.
-    pub fn typetext(&self) -> String {
-        unsafe { CStr::from_ptr(udbEntityTypetext(self.raw)).to_string_lossy().into_owned() }
+    pub fn typetext(&self) -> Option<String> {
+        unsafe {
+            let raw: *const c_char = udbEntityTypetext(self.raw);
+            if raw.is_null() {
+                None
+            } else {
+                Some(CStr::from_ptr(raw).to_string_lossy().into_owned())
+            }
+        }
     }
 
     /// Return debug information about CGraph(ControlFlow Graph) as string.
-    pub fn cgraph(&self) -> String {
+    pub fn cgraph(&self) -> Option<String> {
         unsafe {
             let cgraph_text_raw = CString::new("CGraph").unwrap().as_ptr();
-            CStr::from_ptr(udbEntityFreetext(self.raw, cgraph_text_raw))
+            let cgraph: String = CStr::from_ptr(udbEntityFreetext(self.raw, cgraph_text_raw))
                 .to_string_lossy()
-                .into_owned()
+                .into_owned();
+            if cgraph.is_empty() {
+                None
+            } else {
+                Some(cgraph)
+            }
+        }
+    }
+
+    /// Return debug information about InitValue(init value of parameter) as string.
+    pub fn init_val(&self) -> Option<String> {
+        unsafe {
+            let init_val_text_raw = CString::new("InitValue").unwrap().as_ptr();
+            let init_val: String = CStr::from_ptr(udbEntityFreetext(self.raw, init_val_text_raw))
+                .to_string_lossy()
+                .into_owned();
+            if init_val.is_empty() {
+                None
+            } else {
+                Some(init_val)
+            }
         }
     }
 
     /// Return debug information about linkage(Linkage functions) as string.
-    pub fn linkage(&self) -> String {
+    pub fn linkage(&self) -> Option<String> {
         unsafe {
-            let cgraph_text_raw = CString::new("Linkage").unwrap().as_ptr();
-            CStr::from_ptr(udbEntityFreetext(self.raw, cgraph_text_raw))
+            let linkage_text_raw = CString::new("Linkage").unwrap().as_ptr();
+            let linkage: String = CStr::from_ptr(udbEntityFreetext(self.raw, linkage_text_raw))
                 .to_string_lossy()
-                .into_owned()
+                .into_owned();
+            if linkage.is_empty() {
+                None
+            } else {
+                Some(linkage)
+            }
+        }
+    }
+
+    /// Return debug information about Inline(inline function or not) as bool.
+    /// TODO Test this function.
+    pub unsafe fn inline(&self) -> bool {
+        let inline_text_raw = CString::new("Inline").unwrap().as_ptr();
+        let inline: &CStr = CStr::from_ptr(udbEntityFreetext(self.raw, inline_text_raw));
+        if inline.to_string_lossy().is_empty() {
+            false
+        } else {
+            true
         }
     }
 
@@ -357,20 +417,11 @@ impl<'db> fmt::Debug for ListEntity<'db> {
 impl<'ents> fmt::Debug for Entity<'ents> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f,
-               r"raw: {raw:?}
-id: {id}
-name_unique: {n_unique}
-name_long: {n_long}
-name_simple: {n_simple}
-name_short: {n_short}
-name_relative: {n_relative}
-name_absolute: {n_absolute}
-kind: {kind}
-library: {lib}
-language: {lang}
-value: {val}
-typetext: {ttext}
-cgraph: {freetext}",
+               "raw: {raw:?}\nid: {id}\nname_unique: {n_unique}\nname_long: \
+                {n_long}\nname_simple: {n_simple}\nname_short: {n_short}\nname_relative: \
+                {n_relative}\nname_absolute: {n_absolute}\nkind: {kind}\nlibrary: \
+                {lib}\nlanguage: {lang}\nvalue: {val}\ntypetext: {ttext:?}\ncgraph: \
+                {cgraph:?}\nint_val: {init_val:?}\nlinkage: {linkage:?}",
                raw = self.raw,
                id = self.id(),
                n_unique = self.name_unique(),
@@ -386,7 +437,9 @@ cgraph: {freetext}",
                lib = self.library(),
                val = self.value(),
                ttext = self.typetext(),
-               freetext = self.cgraph())
+               cgraph = self.cgraph(),
+               init_val = self.init_val(),
+               linkage = self.linkage())
     }
 }
 
