@@ -94,7 +94,7 @@ impl<'db> ListEntity<'db> {
 
     /// Filter the specified list of entities, using the kinds specified, and return a new Vec.
     pub fn filter_by_kinds(&self, kinds: Vec<Kind>) -> Vec<Entity> {
-        self.iter().filter(|ent| kinds.locate(ent.kind())).collect()
+        self.iter().filter(|ent| kinds.locate(&ent.kind())).collect()
     }
 }
 
@@ -195,7 +195,12 @@ impl<'ents> Entity<'ents> {
             if raw.is_null() {
                 None
             } else {
-                Some(CStr::from_ptr(raw).to_string_lossy().into_owned())
+                let res_str = CStr::from_ptr(raw).to_string_lossy().into_owned();
+                if res_str.is_empty() {
+                    None
+                } else {
+                    Some(res_str)
+                }
             }
         }
     }
@@ -282,7 +287,7 @@ impl<'ents> Entity<'ents> {
     /// list of references. Return true if the kind list is empty.
     pub fn locate_kinds_of_ref(&self, kinds: Vec<Kind>) -> bool {
         if let Some(refs) = self.references() {
-            refs.iter().any(|reference| kinds.locate(reference.kind()))
+            refs.iter().any(|reference| kinds.locate(&reference.kind()))
         } else {
             false
         }
