@@ -221,7 +221,7 @@ impl<'ents> Entity<'ents> {
     }
 
     /// Return debug information about InitValue(init value of parameter) as string.
-    pub fn init_val(&self) -> Option<String> {
+    pub fn init_value(&self) -> Option<String> {
         unsafe {
             let init_val_text_raw = CString::new("InitValue").unwrap().as_ptr();
             let init_val: String = CStr::from_ptr(udbEntityFreetext(self.raw, init_val_text_raw))
@@ -443,7 +443,7 @@ impl<'ents> fmt::Debug for Entity<'ents> {
                val = self.value(),
                ttext = self.typetext(),
                cgraph = self.cgraph(),
-               init_val = self.init_val(),
+               init_val = self.init_value(),
                linkage = self.linkage())
     }
 }
