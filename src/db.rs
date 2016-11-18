@@ -4,6 +4,7 @@ extern crate time;
 
 use std::ffi::{CString, CStr};
 use std::mem;
+use std::fmt;
 
 use understand_sys::{UdbEntity, udbDbOpen, udbDbLanguage, udbDbName, udbInfoBuild, UdbStatus,
                      UdbLanguage_, udbDbClose, udbListEntity, udbLookupEntityByUniquename,
@@ -78,7 +79,7 @@ impl Db {
     }
 
     /// Lookup an entity by unique name.
-    pub fn lookup_by_name_unique(uniq_name: &str) -> Entity {
+    pub fn lookup_by_name_unique(&self, uniq_name: &str) -> Entity {
         unsafe {
             Entity::from_raw(udbLookupEntityByUniquename(CString::new(uniq_name).unwrap().as_ptr()))
         }
@@ -219,5 +220,11 @@ impl Drop for Db {
         unsafe {
             udbDbClose();
         }
+    }
+}
+
+impl fmt::Debug for Db {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.name())
     }
 }
