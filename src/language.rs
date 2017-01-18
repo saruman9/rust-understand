@@ -77,7 +77,32 @@ impl Language {
         None
     }
 
-    /// Convert Language to string.
+    /// Get `Language` from string.
+    pub fn from_str<S: Into<String>>(language_str: S) -> Self {
+        let language_str = language_str.into();
+        match &*language_str {
+            "None" => Language::NONE,
+            "All" => Language::ALL,
+            "Ada" => Language::Ada,
+            "Assembler" => Language::Asm,
+            "Basic" => Language::Basic,
+            "C/C++" => Language::C,
+            "COBOL" => Language::Cobol,
+            "C#" => Language::CSharp,
+            "FORTRAN" => Language::Fortran,
+            "Java" => Language::Java,
+            "JOVIAL" => Language::Jovial,
+            "Pascal" => Language::Pascal,
+            "PL/M" => Language::Plm,
+            "Python" => Language::Python,
+            "Verilog" => Language::Verilog,
+            "VHDL" => Language::Vhdl,
+            "Web" => Language::Web,
+            _ => Language::NONE,
+        }
+    }
+
+    /// Convert `Language` to string.
     pub fn to_string(&self) -> String {
         match *self {
             Language::NONE => "None".to_string(),

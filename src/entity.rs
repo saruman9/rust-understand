@@ -11,18 +11,19 @@ use std::marker::PhantomData;
 use std::ops::{DerefMut, Deref, Range};
 use std::os::raw::c_char;
 
-use understand_sys::{UdbReference, UdbEntity, udbListEntityFree, udbEntityId, udbEntityNameUnique,
-                     udbEntityNameLong, udbEntityNameSimple, udbEntityNameShort, udbEntityKind,
-                     udbEntityLanguage, udbEntityLibrary, udbEntityTypetext, udbEntityValue,
-                     udbEntityFreetext, udbListReference, udbEntityNameAbsolute,
-                     udbEntityNameRelative, udbEntityRefs, udbListReferenceFile,
-                     udbEntityParameters};
+use understand_sys::{UdbReference, UdbEntity, UdbMetric, udbListEntityFree, udbEntityId,
+                     udbEntityNameUnique, udbEntityNameLong, udbEntityNameSimple,
+                     udbEntityNameShort, udbEntityKind, udbEntityLanguage, udbEntityLibrary,
+                     udbEntityTypetext, udbEntityValue, udbEntityFreetext, udbListReference,
+                     udbEntityNameAbsolute, udbEntityNameRelative, udbEntityRefs,
+                     udbListReferenceFile, udbEntityParameters, udbMetricListEntity};
 
 use db::Db;
 use language::Language;
 use library::Library;
 use reference::ListReference;
 use kind::{Kind, KindVec};
+use metrics::Metric;
 
 
 /// Structure of Entity.
@@ -110,6 +111,10 @@ impl<'ents> Entity<'ents> {
         }
     }
 
+    pub unsafe fn raw(&self) -> UdbEntity {
+        self.raw
+    }
+
     /// Return the entity id. This is only valid until the db is changed.
     pub fn id(&self) -> i32 {
         unsafe { udbEntityId(self.raw) as i32 }
@@ -161,6 +166,30 @@ impl<'ents> Entity<'ents> {
     /// Return the entity language.
     pub fn language(&self) -> Option<Language> {
         unsafe { Language::from_raw(udbEntityLanguage(self.raw)) }
+    }
+
+    /// Return the size of a temporary list of all metrics defined for the specified entity.
+    pub fn metrics(&self) -> Vec<Metric> {
+        unsafe {
+            let mut metrics_mem: *mut UdbMetric = mem::uninitialized();
+            let mut metrics: Vec<Metric> = Vec::new();
+            let count_metrics = udbMetricListEntity(self.raw, &mut metrics_mem);
+
+            for i in 0..count_metrics {
+                metrics.push(Metric::from_raw(*metrics_mem.offset(i as isize)));
+            }
+            metrics
+        }
+    }
+
+    /// Return the value of a metric for the specified entity.
+    pub fn metric_value(&self, metric: &Metric) -> f64 {
+        metric.value(self)
+    }
+
+    /// Return true if the specified metric is defined for the specified entity.
+    pub fn is_defined_metric(&self, metric: &Metric) -> bool {
+        metric.is_defined_entity(self)
     }
 
     /// Return the entity library. Never return NULL.

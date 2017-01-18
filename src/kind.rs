@@ -14,7 +14,7 @@ use understand_sys::{UdbKind, UdbKindList, udbKindLongname, udbKindShortname, ud
 use language::Language;
 
 /// Structure of Kind.
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Kind {
     raw: i32,
 }
