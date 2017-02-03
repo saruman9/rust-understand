@@ -8,8 +8,8 @@ use std::ptr;
 use std::fmt;
 
 use understand_sys::{UdbKind, UdbKindList, udbKindLongname, udbKindShortname, udbIsKindFile,
-                     udbKindLanguage, udbIsKind, udbKindInverse, udbListKindEntity,
-                     udbListKindFree, udbListKindReference, udbKindParse, udbKindListFree};
+                     udbKindLanguage, udbIsKind, udbKindInverse, udbListKindEntity, udbListKindFree,
+                     udbListKindReference, udbKindParse, udbKindListFree};
 
 use language::Language;
 
@@ -51,7 +51,8 @@ impl Kind {
 
     /// Parse the kind text.
     pub fn parse(text: &str) -> Vec<Kind> {
-        unsafe { Kind::from_raw_list(udbKindParse(CString::new(text).unwrap().as_ptr())) }
+        let text_cstr = CString::new(text).unwrap();
+        unsafe { Kind::from_raw_list(udbKindParse(text_cstr.as_ptr())) }
     }
 
     /// Return the long name of kind as String.
@@ -82,8 +83,8 @@ impl Kind {
     /// Return true if the kind matches the kind text.
     pub fn is_kind(&self, text: &str) -> bool {
         unsafe {
-            let text: CString = CString::new(text).unwrap();
-            match udbIsKind(self.raw, text.as_ptr()) {
+            let text_cstr = CString::new(text).unwrap();
+            match udbIsKind(self.raw, text_cstr.as_ptr()) {
                 0 => false,
                 _ => true,
             }

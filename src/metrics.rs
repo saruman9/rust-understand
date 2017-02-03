@@ -81,7 +81,8 @@ impl Metric {
 
     /// Lookup a metric by name.
     pub fn lookup(name: &str) -> Metric {
-        unsafe { Metric::from_raw(udbMetricLookup(CString::new(name).unwrap().as_ptr())) }
+        let name_cstr = CString::new(name).unwrap();
+        unsafe { Metric::from_raw(udbMetricLookup(name_cstr.as_ptr())) }
     }
 
     /// Return true if the specified metric is defined as a project metric for the specified

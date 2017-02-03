@@ -23,7 +23,8 @@ impl Db {
         unsafe {
             debug!("Created Db at {}",
                    time::now().strftime("%M:%S.%f").unwrap());
-            Db::status(udbDbOpen(CString::new(path).unwrap().as_ptr())).map(|_| Db)
+            let path_cstr = CString::new(path).unwrap();
+            Db::status(udbDbOpen(path_cstr.as_ptr())).map(|_| Db)
         }
     }
 
@@ -58,8 +59,10 @@ impl Db {
             let mut udb_list_ents: *mut UdbEntity = mem::uninitialized();
             let mut udb_count_ents: i32 = 0;
             let search_in_shortname_int = if search_in_shortname { 1 } else { 0 };
-            udbLookupEntity(CString::new(name).unwrap().as_ptr(),
-                            CString::new(kind).unwrap().as_ptr(),
+            let name_cstr = CString::new(name).unwrap();
+            let kind_cstr = CString::new(kind).unwrap();
+            udbLookupEntity(name_cstr.as_ptr(),
+                            kind_cstr.as_ptr(),
                             search_in_shortname_int,
                             &mut udb_list_ents,
                             &mut udb_count_ents);
@@ -81,7 +84,8 @@ impl Db {
     /// Lookup an entity by unique name.
     pub fn lookup_by_name_unique(&self, uniq_name: &str) -> Entity {
         unsafe {
-            Entity::from_raw(udbLookupEntityByUniquename(CString::new(uniq_name).unwrap().as_ptr()))
+            let uniq_name_cstr = CString::new(uniq_name).unwrap();
+            Entity::from_raw(udbLookupEntityByUniquename(uniq_name_cstr.as_ptr()))
         }
     }
 

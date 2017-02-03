@@ -237,8 +237,9 @@ impl<'ents> Entity<'ents> {
     /// Return debug information about CGraph(ControlFlow Graph) as string.
     pub fn cgraph(&self) -> Option<String> {
         unsafe {
-            let cgraph_text_raw = CString::new("CGraph").unwrap().as_ptr();
-            let cgraph: String = CStr::from_ptr(udbEntityFreetext(self.raw, cgraph_text_raw))
+            let cgraph_text_cstr = CString::new("CGraph").unwrap();
+            let cgraph: String = CStr::from_ptr(udbEntityFreetext(self.raw,
+                                                                  cgraph_text_cstr.as_ptr()))
                 .to_string_lossy()
                 .into_owned();
             if cgraph.is_empty() {
@@ -252,8 +253,9 @@ impl<'ents> Entity<'ents> {
     /// Return debug information about InitValue(init value of parameter) as string.
     pub fn init_value(&self) -> Option<String> {
         unsafe {
-            let init_val_text_raw = CString::new("InitValue").unwrap().as_ptr();
-            let init_val: String = CStr::from_ptr(udbEntityFreetext(self.raw, init_val_text_raw))
+            let init_val_text_cstr = CString::new("InitValue").unwrap();
+            let init_val: String = CStr::from_ptr(udbEntityFreetext(self.raw,
+                                                                    init_val_text_cstr.as_ptr()))
                 .to_string_lossy()
                 .into_owned();
             if init_val.is_empty() {
@@ -267,8 +269,9 @@ impl<'ents> Entity<'ents> {
     /// Return debug information about linkage(Linkage functions) as string.
     pub fn linkage(&self) -> Option<String> {
         unsafe {
-            let linkage_text_raw = CString::new("Linkage").unwrap().as_ptr();
-            let linkage: String = CStr::from_ptr(udbEntityFreetext(self.raw, linkage_text_raw))
+            let linkage_text_cstr = CString::new("Linkage").unwrap();
+            let linkage: String = CStr::from_ptr(udbEntityFreetext(self.raw,
+                                                                   linkage_text_cstr.as_ptr()))
                 .to_string_lossy()
                 .into_owned();
             if linkage.is_empty() {
@@ -282,8 +285,8 @@ impl<'ents> Entity<'ents> {
     /// Return debug information about Inline(inline function or not) as bool.
     /// TODO Test this function.
     pub unsafe fn inline(&self) -> bool {
-        let inline_text_raw = CString::new("Inline").unwrap().as_ptr();
-        let inline: &CStr = CStr::from_ptr(udbEntityFreetext(self.raw, inline_text_raw));
+        let inline_text_cstr = CString::new("Inline").unwrap();
+        let inline: &CStr = CStr::from_ptr(udbEntityFreetext(self.raw, inline_text_cstr.as_ptr()));
         if inline.to_string_lossy().is_empty() {
             false
         } else {
@@ -339,6 +342,7 @@ impl<'ents> Entity<'ents> {
     /// otherwise.
     /// TODO Rewrite on Rust for much speed?
     /// !!! Don't work udbEntityRefs or I'm stupid.
+    /// Maybe fixed by binding the string to a local variable.
     pub fn references_with_filter(&self,
                                   refkinds: Option<&str>,
                                   entkinds: Option<&str>,
@@ -346,15 +350,17 @@ impl<'ents> Entity<'ents> {
                                   -> Option<ListReference> {
         unsafe {
             let mut udb_list_refs: *mut UdbReference = mem::uninitialized();
+            let refkinds_cstr = CString::new(refkinds.unwrap()).unwrap();
+            let entkinds_cstr = CString::new(entkinds.unwrap()).unwrap();
             let refkinds_raw = if refkinds.is_none() {
                 ptr::null()
             } else {
-                CString::new(refkinds.unwrap()).unwrap().as_ptr()
+                refkinds_cstr.as_ptr()
             };
             let entkinds_raw = if entkinds.is_none() {
                 ptr::null()
             } else {
-                CString::new(entkinds.unwrap()).unwrap().as_ptr()
+                entkinds_cstr.as_ptr()
             };
             let unique_raw: i32 = if unique { 1 } else { 0 };
 
