@@ -55,6 +55,11 @@ impl<'db> ListReference<'db> {
         self.len
     }
 
+    /// Is empty?
+    pub fn is_empty(&self) -> bool {
+        self.len < 1
+    }
+
     /// Gets the Reference at the given index.
     pub fn get_index(&self, index: usize) -> Option<Reference> {
         unsafe {

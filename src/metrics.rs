@@ -60,11 +60,7 @@ impl Metric {
     /// Return true if the specified metric is defined for the specified entity.
     pub fn is_defined_entity(&self, ent: &Entity) -> bool {
         unsafe {
-            if udbMetricIsDefinedEntity(self.raw, ent.raw()) == 1 {
-                true
-            } else {
-                false
-            }
+            udbMetricIsDefinedEntity(self.raw, ent.raw()) == 1
         }
     }
 

@@ -74,6 +74,11 @@ impl<'db> ListEntity<'db> {
         self.len
     }
 
+    /// Is empty?
+    pub fn is_empty(&self) -> bool {
+        self.len < 1
+    }
+
     /// Gets the Entity at the given index.
     pub fn get_index(&self, index: usize) -> Option<Entity> {
         unsafe {
@@ -287,11 +292,7 @@ impl<'ents> Entity<'ents> {
     pub unsafe fn inline(&self) -> bool {
         let inline_text_cstr = CString::new("Inline").unwrap();
         let inline: &CStr = CStr::from_ptr(udbEntityFreetext(self.raw, inline_text_cstr.as_ptr()));
-        if inline.to_string_lossy().is_empty() {
-            false
-        } else {
-            true
-        }
+        !inline.to_string_lossy().is_empty()
     }
 
     /// Return a list of Reference.

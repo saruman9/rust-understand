@@ -77,31 +77,6 @@ impl Language {
         None
     }
 
-    /// Get `Language` from string.
-    pub fn from_str<S: Into<String>>(language_str: S) -> Self {
-        let language_str = language_str.into();
-        match &*language_str {
-            "None" => Language::NONE,
-            "All" => Language::ALL,
-            "Ada" => Language::Ada,
-            "Assembler" => Language::Asm,
-            "Basic" => Language::Basic,
-            "C/C++" => Language::C,
-            "COBOL" => Language::Cobol,
-            "C#" => Language::CSharp,
-            "FORTRAN" => Language::Fortran,
-            "Java" => Language::Java,
-            "JOVIAL" => Language::Jovial,
-            "Pascal" => Language::Pascal,
-            "PL/M" => Language::Plm,
-            "Python" => Language::Python,
-            "Verilog" => Language::Verilog,
-            "VHDL" => Language::Vhdl,
-            "Web" => Language::Web,
-            _ => Language::NONE,
-        }
-    }
-
     /// Convert `Language` to string.
     pub fn to_string(&self) -> String {
         match *self {
@@ -125,6 +100,31 @@ impl Language {
         }
     }
 }
+
+impl<S: AsRef<str>> From<S> for Language {
+    fn from(s: S) -> Self {
+        match s.as_ref() {
+            "All" => Language::ALL,
+            "Ada" => Language::Ada,
+            "Assembler" => Language::Asm,
+            "Basic" => Language::Basic,
+            "C/C++" => Language::C,
+            "COBOL" => Language::Cobol,
+            "C#" => Language::CSharp,
+            "FORTRAN" => Language::Fortran,
+            "Java" => Language::Java,
+            "JOVIAL" => Language::Jovial,
+            "Pascal" => Language::Pascal,
+            "PL/M" => Language::Plm,
+            "Python" => Language::Python,
+            "Verilog" => Language::Verilog,
+            "VHDL" => Language::Vhdl,
+            "Web" => Language::Web,
+            _ => Language::NONE,
+        }
+    }
+}
+
 
 impl Default for Language {
     fn default() -> Language {
